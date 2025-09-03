@@ -5,6 +5,8 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product-card';
 import RecommendationWizard from '@/components/recommendation-wizard';
+import ExpertConsultation from '@/components/expert-consultation';
+import AdminQuickAccess from '@/components/admin-quick-access';
 import { products, USD_TO_INR_RATE } from '@/lib/products';
 
 function HeroSection() {
@@ -118,8 +120,10 @@ export default function Home() {
         <HeroSection />
         <ProductSection />
         <AIRecommendationSection />
+        <ExpertConsultation />
       </main>
       <Footer />
+      <AdminQuickAccess />
     </div>
   );
 }

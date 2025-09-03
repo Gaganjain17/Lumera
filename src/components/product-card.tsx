@@ -1,12 +1,18 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { Product } from '@/lib/products';
+import { useWishlist } from '@/context/wishlist-context';
+import { USD_TO_INR_RATE } from '@/lib/products';
 
 export default function ProductCard(product: Product) {
-  const { id, name, price, image, hint } = product;
+  const { id, name, price, image, hint, category, rating, reviews } = product;
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(id);
 
   return (
     <Link href={`/products/${id}`}>
@@ -20,13 +26,35 @@ export default function ProductCard(product: Product) {
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
             />
-            <Button variant="secondary" size="icon" className="absolute top-3 right-3 h-8 w-8 bg-background/50 hover:bg-background/80 text-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Heart className="h-4 w-4" />
+            <Button 
+              variant="secondary" 
+              size="icon" 
+              className={`absolute top-3 right-3 h-8 w-8 bg-background/50 hover:bg-background/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                isWishlisted ? 'text-red-500 hover:text-red-600' : 'text-foreground'
+              }`}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isWishlisted) {
+                  removeFromWishlist(id);
+                } else {
+                  addToWishlist(product);
+                }
+              }}
+            >
+              <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} />
             </Button>
           </div>
           <div className="p-4 text-center flex flex-col flex-grow">
             <h3 className="font-semibold truncate text-lg flex-grow">{name}</h3>
-            <p className="mt-1 text-primary font-medium">${price.toLocaleString()}</p>
+            <div className="mt-1 space-y-1">
+              <p className="text-primary font-medium">₹{(price * USD_TO_INR_RATE).toLocaleString('en-IN')}</p>
+              <p className="text-xs text-muted-foreground">${price.toLocaleString()}</p>
+            </div>
+            <div className="flex items-center justify-center gap-1 mt-2">
+              <span className="text-yellow-500 text-sm">★</span>
+              <span className="text-sm text-muted-foreground">{rating} ({reviews})</span>
+            </div>
           </div>
         </CardContent>
       </Card>

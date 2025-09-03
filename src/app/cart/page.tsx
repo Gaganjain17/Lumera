@@ -9,32 +9,57 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import BackButton from "@/components/back-button";
+import { useCart } from "@/context/cart-context";
+import { USD_TO_INR_RATE } from "@/lib/products";
 
-function CartItem() {
+function CartItem({ item, onUpdateQuantity, onRemove }: {
+  item: any;
+  onUpdateQuantity: (cartId: string, quantity: number) => void;
+  onRemove: (cartId: string) => void;
+}) {
+  const priceINR = item.price * USD_TO_INR_RATE;
+
   return (
     <div className="flex items-start gap-6">
       <div className="relative h-32 w-32 rounded-lg overflow-hidden">
-        <Image src="https://picsum.photos/200/200?r=1" alt="Product Image" fill className="object-cover" />
+        <Image src={item.image} alt={item.name} fill className="object-cover" />
       </div>
       <div className="flex-1">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-lg">Solitaire Diamond Ring</h3>
-            <p className="text-sm text-muted-foreground">Size: 7, 14k White Gold</p>
+            <h3 className="font-semibold text-lg">{item.name}</h3>
+            {item.customization && (
+              <p className="text-sm text-muted-foreground">{item.customization}</p>
+            )}
           </div>
-          <p className="font-semibold text-lg">₹2,08,750</p>
+          <p className="font-semibold text-lg">₹{priceINR.toLocaleString('en-IN')}</p>
         </div>
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => onUpdateQuantity(item.cartId, item.quantity - 1)}
+            >
               <Minus className="h-4 w-4" />
             </Button>
-            <span className="w-10 text-center">1</span>
-            <Button variant="outline" size="icon" className="h-8 w-8">
+            <span className="w-10 text-center">{item.quantity}</span>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => onUpdateQuantity(item.cartId, item.quantity + 1)}
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-muted-foreground hover:text-destructive"
+            onClick={() => onRemove(item.cartId)}
+          >
             <Trash2 className="h-5 w-5" />
           </Button>
         </div>
@@ -44,7 +69,12 @@ function CartItem() {
 }
 
 export default function CartPage() {
-  const hasItems = true; // Placeholder
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const hasItems = cartItems.length > 0;
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shipping = subtotal * 0.01; // 1% shipping
+  const total = subtotal + shipping;
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
@@ -57,26 +87,33 @@ export default function CartPage() {
           {hasItems ? (
             <div className="grid lg:grid-cols-3 gap-12">
               <div className="lg:col-span-2 space-y-6">
-                <CartItem />
-                <Separator />
-                <CartItem />
+                {cartItems.map((item) => (
+                  <div key={item.cartId}>
+                    <CartItem 
+                      item={item} 
+                      onUpdateQuantity={updateQuantity}
+                      onRemove={removeFromCart}
+                    />
+                    <Separator className="mt-6" />
+                  </div>
+                ))}
               </div>
 
               <div className="bg-muted/30 rounded-lg p-6 lg:p-8 h-fit">
                 <h2 className="text-2xl font-headline font-semibold mb-6">Order Summary</h2>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>₹4,17,500</span>
+                    <span>Subtotal ({cartItems.length} items)</span>
+                    <span>₹{subtotal.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>₹2,087</span>
+                    <span>₹{shipping.toLocaleString('en-IN')}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>₹4,19,587</span>
+                    <span>₹{total.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
                 <Button size="lg" className="w-full mt-8">Proceed to Checkout</Button>

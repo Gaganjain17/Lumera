@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, use } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -12,6 +12,7 @@ import Footer from '@/components/layout/footer';
 import { Heart, Star } from 'lucide-react';
 import BackButton from '@/components/back-button';
 import { useCart } from '@/context/cart-context';
+import { useWishlist } from '@/context/wishlist-context';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { products, customizationCosts, USD_TO_INR_RATE } from '@/lib/products';
@@ -20,10 +21,13 @@ function getProduct(id: string) {
   return products.find(p => p.id === parseInt(id));
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
-  const product = getProduct(params.id);
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const product = getProduct(resolvedParams.id);
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
+  const isWishlisted = isInWishlist(product?.id || 0);
   
   // State for customizations
   const [selectedSize, setSelectedSize] = useState('15'); // Default size 15 (mid-range)
@@ -247,8 +251,27 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               
               <div className="flex items-center gap-4">
                 <Button size="lg" className="flex-1" onClick={handleAddToCart}>Add to Cart</Button>
-                <Button variant="outline" size="icon" className="h-12 w-12">
-                  <Heart className="h-6 w-6" />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className={`h-12 w-12 ${isWishlisted ? 'text-red-500 border-red-500 hover:bg-red-50' : ''}`}
+                  onClick={() => {
+                    if (isWishlisted) {
+                      removeFromWishlist(product.id);
+                      toast({
+                        title: 'Removed from Wishlist',
+                        description: 'Item has been removed from your wishlist.',
+                      });
+                    } else {
+                      addToWishlist(product);
+                      toast({
+                        title: 'Added to Wishlist',
+                        description: 'Item has been added to your wishlist.',
+                      });
+                    }
+                  }}
+                >
+                  <Heart className={`h-6 w-6 ${isWishlisted ? 'fill-current' : ''}`} />
                 </Button>
               </div>
             </div>

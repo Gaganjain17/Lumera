@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
-import { Product } from '@/lib/products';
+import { Product, getCategoryById } from '@/lib/products';
 import { useWishlist } from '@/context/wishlist-context';
 import { USD_TO_INR_RATE } from '@/lib/products';
 
 export default function ProductCard(product: Product) {
-  const { id, name, price, image, hint, category, rating, reviews } = product;
+  const { id, name, price, image, hint, categoryId, subHeading } = product;
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const isWishlisted = isInWishlist(id);
 
@@ -47,14 +47,14 @@ export default function ProductCard(product: Product) {
           </div>
           <div className="p-4 text-center flex flex-col flex-grow">
             <h3 className="font-semibold truncate text-lg flex-grow">{name}</h3>
-            <div className="mt-1 space-y-1">
+            {subHeading && (
+              <p className="text-sm text-muted-foreground mt-1 truncate">{subHeading}</p>
+            )}
+            <div className="mt-2 space-y-1">
               <p className="text-primary font-medium">₹{(price * USD_TO_INR_RATE).toLocaleString('en-IN')}</p>
               <p className="text-xs text-muted-foreground">${price.toLocaleString()}</p>
             </div>
-            <div className="flex items-center justify-center gap-1 mt-2">
-              <span className="text-yellow-500 text-sm">★</span>
-              <span className="text-sm text-muted-foreground">{rating} ({reviews})</span>
-            </div>
+            <div className="mt-2" />
           </div>
         </CardContent>
       </Card>

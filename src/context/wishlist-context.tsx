@@ -10,10 +10,9 @@ interface WishlistItem {
   image: string;
   hint: string;
   description: string;
-  category: string;
+  categoryId: number;
   subCategory?: string;
-  rating: number;
-  reviews: number;
+  subHeading?: string;
 }
 
 interface WishlistContextType {
@@ -82,5 +81,6 @@ export function useWishlist() {
   }
   return context;
 }
+
 
 

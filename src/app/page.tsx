@@ -4,10 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product-card';
+import CategoryCard from '@/components/category-card';
 import RecommendationWizard from '@/components/recommendation-wizard';
 import ExpertConsultation from '@/components/expert-consultation';
 import AdminQuickAccess from '@/components/admin-quick-access';
-import { products, USD_TO_INR_RATE } from '@/lib/products';
+import { categories, products, USD_TO_INR_RATE } from '@/lib/products';
 
 function HeroSection() {
   return (
@@ -36,46 +37,18 @@ function HeroSection() {
   );
 }
 
-function ProductSection() {
-
+function CategorySection() {
   return (
-    <section className="py-16 md:py-24">
+    <section className="py-20 md:py-32">
       <div className="container">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-headline font-bold">Our Collection</h2>
-          <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">Curated pieces of art, for moments that matter. Each jewel is a testament to our commitment to quality and elegance.</p>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tight">Our Collection</h2>
+          <p className="text-muted-foreground mt-6 max-w-3xl mx-auto text-lg leading-relaxed">Explore our carefully curated categories of exquisite jewelry and gemstones. Each category represents our commitment to quality and elegance.</p>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8 justify-center md:justify-end">
-          <Select defaultValue="featured">
-            <SelectTrigger className="w-[180px] bg-background">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="featured">Featured</SelectItem>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="price-asc">Price: Low to High</SelectItem>
-              <SelectItem value="price-desc">Price: High to Low</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[180px] bg-background">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="rings">Rings</SelectItem>
-              <SelectItem value="necklaces">Necklaces</SelectItem>
-              <SelectItem value="bracelets">Bracelets</SelectItem>
-              <SelectItem value="earrings">Earrings</SelectItem>
-              <SelectItem value="gemstones">Gemstones</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
-          {products.map(product => (
-            <ProductCard key={product.id} {...product} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 lg:gap-8">
+          {categories.map(category => (
+            <CategoryCard key={category.id} category={category} />
           ))}
         </div>
       </div>
@@ -118,7 +91,7 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         <HeroSection />
-        <ProductSection />
+        <CategorySection />
         <AIRecommendationSection />
         <ExpertConsultation />
       </main>

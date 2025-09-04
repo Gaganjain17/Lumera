@@ -15,7 +15,7 @@ import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { products, customizationCosts, USD_TO_INR_RATE } from '@/lib/products';
+import { products, customizationCosts, USD_TO_INR_RATE, getCategoryById } from '@/lib/products';
 
 function getProduct(id: string) {
   return products.find(p => p.id === parseInt(id));
@@ -40,7 +40,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     let price = product.price;
     
     // Ring size cost
-    if (product.category === 'Rings' || (purchaseType === 'mounted' && (jewelryType === 'Ring' || jewelryType === 'Engagement Ring'))) {
+    const category = getCategoryById(product.categoryId);
+    if (category?.name === 'Rings' || (purchaseType === 'mounted' && (jewelryType === 'Ring' || jewelryType === 'Engagement Ring'))) {
         const baseSize = 5;
         const sizeIncrement = parseInt(selectedSize) - baseSize;
         if (sizeIncrement > 0) {
@@ -81,9 +82,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const handleAddToCart = () => {
     let customizationDetails = '';
-    if (product.category === 'Rings') {
+    const category = getCategoryById(product.categoryId);
+    if (category?.name === 'Rings') {
        customizationDetails = `Size: ${selectedSize}`;
-    } else if (product.category === 'Gemstones') {
+    } else if (category?.name === 'Gemstones') {
       if (purchaseType === 'loose') {
         customizationDetails = 'Loose Stone';
       } else {
@@ -130,23 +132,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             <div className="space-y-6">
               <div>
-                <span className="text-sm font-medium text-primary">{product.category}</span>
+                <span className="text-sm font-medium text-primary">{getCategoryById(product.categoryId)?.name}</span>
                 <h1 className="text-3xl md:text-4xl font-headline font-bold mt-1">{product.name}</h1>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-primary">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'fill-current' : ''}`} />
-                  ))}
+              <div className="h-1" />
+              
+              {product.subHeading && (
+                <div className="mt-2">
+                  <p className="text-lg font-medium text-primary">{product.subHeading}</p>
                 </div>
-                <span className="text-muted-foreground text-sm">{product.rating} ({product.reviews} reviews)</span>
-              </div>
+              )}
               
               <p className="text-lg text-foreground/80 leading-relaxed">{product.description}</p>
               
               {/* Customization Options */}
-              {product.category === 'Rings' && (
+              {getCategoryById(product.categoryId)?.name === 'Rings' && (
                 <div className="space-y-4 pt-4">
                    <Label className='text-base'>Ring Size</Label>
                    <Select value={selectedSize} onValueChange={setSelectedSize}>
@@ -162,7 +163,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               )}
 
-              {product.category === 'Gemstones' && (
+              {getCategoryById(product.categoryId)?.name === 'Gemstones' && (
                 <div className="space-y-6 pt-4">
                   <Separator />
                   <h3 className="text-xl font-headline font-semibold">Customize Your Gemstone</h3>

@@ -146,3 +146,4 @@ For technical support or feature requests, please contact your development team 
 **Note**: This admin panel is designed for jewelry stores and includes specific features for gemstone and jewelry management. Customize categories and fields as needed for your specific business requirements.
 
 
+

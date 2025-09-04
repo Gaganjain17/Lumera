@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, Heart, ShoppingBag, Menu, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -129,9 +130,19 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
       <div className="container flex h-20 items-center justify-between">
-        <Link href="/" className="flex flex-col items-start leading-none">
-          <span className="font-headline text-3xl font-bold text-primary tracking-wider">LUMERA</span>
-          <span className="text-[0.6rem] text-muted-foreground tracking-[0.2em]">FINE GEMS &amp; JEWELS</span>
+        <Link href="/" className="flex items-center" aria-label="Lumera Home">
+          <div className="relative h-10 w-[140px] md:h-12 md:w-[180px]">
+          <div className="relative h-10 w-[140px] md:h-12 md:w-[180px]">
+  <Image
+    src="/logo/Lumera_logo.PNG"
+    alt="Luméra — Fine Gems & Jewels"
+    fill
+    className="object-contain"
+    priority
+  />
+</div>
+
+          </div>
         </Link>
         
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">

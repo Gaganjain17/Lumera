@@ -10,7 +10,7 @@ import { Heart, Trash2, ShoppingCart } from "lucide-react";
 import BackButton from "@/components/back-button";
 import { useWishlist } from "@/context/wishlist-context";
 import { useCart } from "@/context/cart-context";
-import { USD_TO_INR_RATE } from "@/lib/products";
+import { USD_TO_INR_RATE, getCategoryById } from "@/lib/products";
 
 function WishlistItem({ item, onRemove, onAddToCart }: {
   item: any;
@@ -18,6 +18,7 @@ function WishlistItem({ item, onRemove, onAddToCart }: {
   onAddToCart: (item: any) => void;
 }) {
   const priceINR = item.price * USD_TO_INR_RATE;
+  const categoryName = getCategoryById(item.categoryId)?.name;
 
   return (
     <div className="flex items-start gap-6">
@@ -28,12 +29,10 @@ function WishlistItem({ item, onRemove, onAddToCart }: {
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-semibold text-lg">{item.name}</h3>
-            <p className="text-sm text-muted-foreground">{item.category}</p>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-yellow-500">★</span>
-              <span className="text-sm">{item.rating}</span>
-              <span className="text-sm text-muted-foreground">({item.reviews} reviews)</span>
-            </div>
+            {categoryName && (
+              <p className="text-sm text-muted-foreground">{categoryName}</p>
+            )}
+            <div className="h-1" />
           </div>
           <p className="font-semibold text-lg">₹{priceINR.toLocaleString('en-IN')}</p>
         </div>
@@ -112,5 +111,6 @@ export default function WishlistPage() {
     </div>
   );
 }
+
 
 

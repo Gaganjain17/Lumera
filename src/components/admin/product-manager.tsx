@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { products, Product, USD_TO_INR_RATE } from '@/lib/products';
+import { products, Product, categories, Category, USD_TO_INR_RATE, getCategoryById } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminProductManager() {
@@ -28,40 +28,41 @@ export default function AdminProductManager() {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
+    priceCurrency: 'USD',
     image: '',
     hint: '',
     description: '',
-    category: '',
+    categoryId: '',
     subCategory: '',
-    rating: '',
-    reviews: ''
+    subHeading: ''
   });
 
-  const categories = ['Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Gemstones'];
   const subCategories = ['emerald', 'ruby', 'yellow-sapphire', 'blue-sapphire'];
 
-  const filteredProducts = productList.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = productList.filter(product => {
+    const category = getCategoryById(product.categoryId);
+    return product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (category && category.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+  });
 
   const resetForm = () => {
     setFormData({
       name: '',
       price: '',
+      priceCurrency: 'USD',
       image: '',
       hint: '',
       description: '',
-      category: '',
+      categoryId: '',
       subCategory: '',
-      rating: '',
-      reviews: ''
+      subHeading: '',
+      rating: ''
     });
   };
 
   const handleAddProduct = () => {
-    if (!formData.name || !formData.price || !formData.image || !formData.description || !formData.category) {
+    if (!formData.name || !formData.price || !formData.image || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields.',
@@ -70,17 +71,22 @@ export default function AdminProductManager() {
       return;
     }
 
+    // Convert price to USD if entered in INR
+    let priceInUSD = parseFloat(formData.price);
+    if (formData.priceCurrency === 'INR') {
+      priceInUSD = parseFloat(formData.price) / USD_TO_INR_RATE;
+    }
+
     const newProduct: Product = {
       id: Math.max(...productList.map(p => p.id)) + 1,
       name: formData.name,
-      price: parseFloat(formData.price),
+      price: priceInUSD,
       image: formData.image,
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
       description: formData.description,
-      category: formData.category,
+      categoryId: parseInt(formData.categoryId),
       subCategory: formData.subCategory || undefined,
-      rating: parseFloat(formData.rating) || 0,
-      reviews: parseInt(formData.reviews) || 0
+      subHeading: formData.subHeading || undefined
     };
 
     setProductList([...productList, newProduct]);
@@ -94,7 +100,7 @@ export default function AdminProductManager() {
   };
 
   const handleEditProduct = () => {
-    if (!editingProduct || !formData.name || !formData.price || !formData.image || !formData.description || !formData.category) {
+    if (!editingProduct || !formData.name || !formData.price || !formData.image || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields.',
@@ -103,17 +109,22 @@ export default function AdminProductManager() {
       return;
     }
 
+    // Convert price to USD if entered in INR
+    let priceInUSD = parseFloat(formData.price);
+    if (formData.priceCurrency === 'INR') {
+      priceInUSD = parseFloat(formData.price) / USD_TO_INR_RATE;
+    }
+
     const updatedProduct: Product = {
       ...editingProduct,
       name: formData.name,
-      price: parseFloat(formData.price),
+      price: priceInUSD,
       image: formData.image,
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
       description: formData.description,
-      category: formData.category,
+      categoryId: parseInt(formData.categoryId),
       subCategory: formData.subCategory || undefined,
-      rating: parseFloat(formData.rating) || 0,
-      reviews: parseInt(formData.reviews) || 0
+      subHeading: formData.subHeading || undefined
     };
 
     setProductList(productList.map(p => p.id === editingProduct.id ? updatedProduct : p));
@@ -145,13 +156,13 @@ export default function AdminProductManager() {
     setFormData({
       name: product.name,
       price: product.price.toString(),
+      priceCurrency: 'USD',
       image: product.image,
       hint: product.hint,
       description: product.description,
-      category: product.category,
+      categoryId: product.categoryId.toString(),
       subCategory: product.subCategory || '',
-      rating: product.rating.toString(),
-      reviews: product.reviews.toString()
+      subHeading: product.subHeading || ''
     });
     setIsEditDialogOpen(true);
   };
@@ -248,7 +259,7 @@ export default function AdminProductManager() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{product.category}</Badge>
+                    <Badge variant="outline">{getCategoryById(product.categoryId)?.name || 'Unknown'}</Badge>
                     {product.subCategory && (
                       <Badge variant="secondary" className="ml-2">{product.subCategory}</Badge>
                     )}
@@ -256,11 +267,7 @@ export default function AdminProductManager() {
                   <TableCell>${product.price.toLocaleString()}</TableCell>
                   <TableCell>₹{(product.price * USD_TO_INR_RATE).toLocaleString('en-IN')}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span className="text-yellow-500">★</span>
-                      <span>{product.rating}</span>
-                      <span className="text-gray-500">({product.reviews})</span>
-                    </div>
+                    —
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -334,7 +341,7 @@ function ProductForm({
 }: { 
   formData: any; 
   setFormData: (data: any) => void; 
-  categories: string[];
+  categories: Category[];
   subCategories: string[];
 }) {
   return (
@@ -350,15 +357,27 @@ function ProductForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="price">Price (USD) *</Label>
-          <Input
-            id="price"
-            type="number"
-            step="0.01"
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-            placeholder="2500.00"
-          />
+          <Label htmlFor="price">Price *</Label>
+          <div className="flex gap-2">
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              placeholder="2500.00"
+              className="flex-1"
+            />
+            <Select value={formData.priceCurrency} onValueChange={(value) => setFormData({ ...formData, priceCurrency: value })}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="INR">₹</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -384,20 +403,30 @@ function ProductForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+          <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
             <SelectTrigger>
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
+                <SelectItem key={category.id} value={category.id.toString()}>{category.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      {formData.category === 'Gemstones' && (
+      <div className="space-y-2">
+        <Label htmlFor="subHeading">Sub Heading</Label>
+        <Input
+          id="subHeading"
+          value={formData.subHeading}
+          onChange={(e) => setFormData({ ...formData, subHeading: e.target.value })}
+          placeholder="e.g., Pure Diamond and Gold"
+        />
+      </div>
+
+      {formData.categoryId && getCategoryById(parseInt(formData.categoryId))?.name === 'Gemstones' && (
         <div className="space-y-2">
           <Label htmlFor="subCategory">Sub Category</Label>
           <Select value={formData.subCategory} onValueChange={(value) => setFormData({ ...formData, subCategory: value })}>
@@ -424,32 +453,7 @@ function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="rating">Rating</Label>
-          <Input
-            id="rating"
-            type="number"
-            step="0.1"
-            min="0"
-            max="5"
-            value={formData.rating}
-            onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-            placeholder="4.8"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="reviews">Number of Reviews</Label>
-          <Input
-            id="reviews"
-            type="number"
-            min="0"
-            value={formData.reviews}
-            onChange={(e) => setFormData({ ...formData, reviews: e.target.value })}
-            placeholder="120"
-          />
-        </div>
-      </div>
+      {/* Rating removed */}
     </div>
   );
 }

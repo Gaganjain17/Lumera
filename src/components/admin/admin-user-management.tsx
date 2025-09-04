@@ -34,10 +34,16 @@ export default function AdminUserManagement() {
   ]);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState<{
+    username: string;
+    email: string;
+    role: 'admin' | 'super_admin';
+    password: string;
+    confirmPassword: string;
+  }>({
     username: '',
     email: '',
-    role: 'admin' as const,
+    role: 'admin',
     password: '',
     confirmPassword: ''
   });
@@ -96,7 +102,7 @@ export default function AdminUserManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={newUser.role} onValueChange={(value: 'admin' | 'super_admin') => setNewUser({ ...newUser, role: value })}>
+                <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value as 'admin' | 'super_admin' })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -188,5 +194,6 @@ export default function AdminUserManagement() {
     </div>
   );
 }
+
 
 

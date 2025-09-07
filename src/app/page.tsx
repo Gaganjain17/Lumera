@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/layout/header';
@@ -8,7 +11,7 @@ import CategoryCard from '@/components/category-card';
 import RecommendationWizard from '@/components/recommendation-wizard';
 import ExpertConsultation from '@/components/expert-consultation';
 import AdminQuickAccess from '@/components/admin-quick-access';
-import { categories, products, USD_TO_INR_RATE } from '@/lib/products';
+import { categories, products, USD_TO_INR_RATE, subscribeCategories, loadCategoriesFromStorage } from '@/lib/products';
 
 function HeroSection() {
   return (
@@ -38,16 +41,28 @@ function HeroSection() {
 }
 
 function CategorySection() {
+  const [dynamicCategories, setDynamicCategories] = React.useState(categories);
+
+  React.useEffect(() => {
+    // Load categories immediately and update state
+    loadCategoriesFromStorage();
+    setDynamicCategories([...categories]);
+    
+    // Subscribe to future changes
+    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
+    return () => unsubscribe();
+  }, []);
+
   return (
     <section className="py-20 md:py-32">
       <div className="container">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tight">Our Collection</h2>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold tracking-tight text-primary">Our Collection</h2>
           <p className="text-muted-foreground mt-6 max-w-3xl mx-auto text-lg leading-relaxed">Explore our carefully curated categories of exquisite jewelry and gemstones. Each category represents our commitment to quality and elegance.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 lg:gap-8">
-          {categories.map(category => (
+          {dynamicCategories.map(category => (
             <CategoryCard key={category.id} category={category} />
           ))}
         </div>

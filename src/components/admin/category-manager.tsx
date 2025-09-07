@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Search, Image as ImageIcon } from 'lucide-react';
-import { categories, Category, updateCategoryProductCounts } from '@/lib/products';
+import { categories, Category, updateCategoryProductCounts, setCategories, subscribeCategories, loadCategoriesFromStorage } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CategoryManager() {
@@ -35,6 +35,13 @@ export default function CategoryManager() {
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     category.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    loadCategoriesFromStorage();
+    const unsubscribe = subscribeCategories((next) => setCategoryList([...next]));
+    return () => unsubscribe();
+  }, []);
 
   const resetForm = () => {
     setFormData({
@@ -84,7 +91,9 @@ export default function CategoryManager() {
       productCount: 0
     };
 
-    setCategoryList([...categoryList, newCategory]);
+    const next = [...categoryList, newCategory];
+    setCategoryList(next);
+    setCategories(next);
     resetForm();
     setIsAddDialogOpen(false);
     
@@ -124,7 +133,9 @@ export default function CategoryManager() {
       image: formData.image
     };
 
-    setCategoryList(categoryList.map(c => c.id === editingCategory.id ? updatedCategory : c));
+    const next = categoryList.map(c => c.id === editingCategory.id ? updatedCategory : c);
+    setCategoryList(next);
+    setCategories(next);
     resetForm();
     setIsEditDialogOpen(false);
     setEditingCategory(null);
@@ -138,7 +149,9 @@ export default function CategoryManager() {
   const handleDeleteCategory = () => {
     if (!deletingCategory) return;
     
-    setCategoryList(categoryList.filter(c => c.id !== deletingCategory.id));
+    const next = categoryList.filter(c => c.id !== deletingCategory.id);
+    setCategoryList(next);
+    setCategories(next);
     setIsDeleteDialogOpen(false);
     setDeletingCategory(null);
     
@@ -248,7 +261,7 @@ export default function CategoryManager() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    <code className="text-sm px-2 py-1 rounded bg-muted text-foreground border">
                       {category.slug}
                     </code>
                   </TableCell>

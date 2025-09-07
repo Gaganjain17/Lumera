@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, use } from 'react';
+import { useState, use, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,7 +15,9 @@ import {
   getCategoryBySlug, 
   getProductsByCategorySlug, 
   categories,
-  USD_TO_INR_RATE 
+  USD_TO_INR_RATE,
+  loadProductsFromStorage,
+  loadCategoriesFromStorage
 } from '@/lib/products';
 
 interface CategoryPageProps {
@@ -27,8 +29,17 @@ interface CategoryPageProps {
 export default function CategoryPage({ params }: CategoryPageProps) {
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState('all');
+  const [dynamicCategories, setDynamicCategories] = useState(categories);
 
   const resolvedParams = use(params);
+  
+  // Load data from storage on mount
+  useEffect(() => {
+    loadProductsFromStorage();
+    loadCategoriesFromStorage();
+    setDynamicCategories([...categories]);
+  }, []);
+
   const category = getCategoryBySlug(resolvedParams.slug);
   const products = getProductsByCategorySlug(resolvedParams.slug);
 
@@ -164,7 +175,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           <div className="container">
             <h2 className="text-2xl font-bold text-center mb-8">Explore Other Categories</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 lg:gap-4">
-              {categories
+              {dynamicCategories
                 .filter(cat => cat.slug !== resolvedParams.slug)
                 .slice(0, 7)
                 .map(category => (

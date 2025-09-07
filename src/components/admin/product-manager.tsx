@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { products, Product, categories, Category, USD_TO_INR_RATE, getCategoryById } from '@/lib/products';
+import { products, Product, categories, Category, USD_TO_INR_RATE, getCategoryById, subscribeCategories, loadCategoriesFromStorage, loadProductsFromStorage, setProducts } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminProductManager() {
   const [productList, setProductList] = useState<Product[]>(products);
+  const [categoryList, setCategoryList] = useState<Category[]>(categories);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function AdminProductManager() {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    priceCurrency: 'USD',
+    priceInr: '',
     image: '',
     hint: '',
     description: '',
@@ -38,6 +39,16 @@ export default function AdminProductManager() {
   });
 
   const subCategories = ['emerald', 'ruby', 'yellow-sapphire', 'blue-sapphire'];
+
+  // Keep categories in sync with Category Manager via subscription
+  useEffect(() => {
+    loadCategoriesFromStorage();
+    loadProductsFromStorage();
+    // initialize local state from storage-loaded arrays
+    setProductList([...products]);
+    const unsubscribe = subscribeCategories((next) => setCategoryList([...next]));
+    return () => unsubscribe();
+  }, []);
 
   const filteredProducts = productList.filter(product => {
     const category = getCategoryById(product.categoryId);
@@ -50,7 +61,7 @@ export default function AdminProductManager() {
     setFormData({
       name: '',
       price: '',
-      priceCurrency: 'USD',
+      priceInr: '',
       image: '',
       hint: '',
       description: '',
@@ -62,7 +73,7 @@ export default function AdminProductManager() {
   };
 
   const handleAddProduct = () => {
-    if (!formData.name || !formData.price || !formData.image || !formData.description || !formData.categoryId) {
+    if (!formData.name || !formData.priceInr || !formData.image || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields.',
@@ -71,11 +82,8 @@ export default function AdminProductManager() {
       return;
     }
 
-    // Convert price to USD if entered in INR
-    let priceInUSD = parseFloat(formData.price);
-    if (formData.priceCurrency === 'INR') {
-      priceInUSD = parseFloat(formData.price) / USD_TO_INR_RATE;
-    }
+    // Use INR price and convert to USD for storage
+    const priceInUSD = parseFloat(formData.priceInr) / USD_TO_INR_RATE;
 
     const newProduct: Product = {
       id: Math.max(...productList.map(p => p.id)) + 1,
@@ -89,7 +97,9 @@ export default function AdminProductManager() {
       subHeading: formData.subHeading || undefined
     };
 
-    setProductList([...productList, newProduct]);
+    const next = [...productList, newProduct];
+    setProductList(next);
+    setProducts(next);
     resetForm();
     setIsAddDialogOpen(false);
     
@@ -100,7 +110,7 @@ export default function AdminProductManager() {
   };
 
   const handleEditProduct = () => {
-    if (!editingProduct || !formData.name || !formData.price || !formData.image || !formData.description || !formData.categoryId) {
+    if (!editingProduct || !formData.name || !formData.priceInr || !formData.image || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
         description: 'Please fill in all required fields.',
@@ -109,11 +119,8 @@ export default function AdminProductManager() {
       return;
     }
 
-    // Convert price to USD if entered in INR
-    let priceInUSD = parseFloat(formData.price);
-    if (formData.priceCurrency === 'INR') {
-      priceInUSD = parseFloat(formData.price) / USD_TO_INR_RATE;
-    }
+    // Use INR price and convert to USD for storage
+    const priceInUSD = parseFloat(formData.priceInr) / USD_TO_INR_RATE;
 
     const updatedProduct: Product = {
       ...editingProduct,
@@ -127,7 +134,9 @@ export default function AdminProductManager() {
       subHeading: formData.subHeading || undefined
     };
 
-    setProductList(productList.map(p => p.id === editingProduct.id ? updatedProduct : p));
+    const next = productList.map(p => p.id === editingProduct.id ? updatedProduct : p);
+    setProductList(next);
+    setProducts(next);
     resetForm();
     setIsEditDialogOpen(false);
     setEditingProduct(null);
@@ -141,7 +150,9 @@ export default function AdminProductManager() {
   const handleDeleteProduct = () => {
     if (!deletingProduct) return;
     
-    setProductList(productList.filter(p => p.id !== deletingProduct.id));
+    const next = productList.filter(p => p.id !== deletingProduct.id);
+    setProductList(next);
+    setProducts(next);
     setIsDeleteDialogOpen(false);
     setDeletingProduct(null);
     
@@ -155,8 +166,8 @@ export default function AdminProductManager() {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      price: product.price.toString(),
-      priceCurrency: 'USD',
+      price: '', // Let admin enter separate USD value
+      priceInr: (product.price * USD_TO_INR_RATE).toFixed(2),
       image: product.image,
       hint: product.hint,
       description: product.description,
@@ -195,7 +206,7 @@ export default function AdminProductManager() {
             <ProductForm 
               formData={formData} 
               setFormData={setFormData} 
-              categories={categories}
+              categories={categoryList}
               subCategories={subCategories}
             />
             <DialogFooter>
@@ -304,7 +315,7 @@ export default function AdminProductManager() {
           <ProductForm 
             formData={formData} 
             setFormData={setFormData} 
-            categories={categories}
+            categories={categoryList}
             subCategories={subCategories}
           />
           <DialogFooter>
@@ -357,27 +368,27 @@ function ProductForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="price">Price *</Label>
-          <div className="flex gap-2">
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              placeholder="2500.00"
-              className="flex-1"
-            />
-            <Select value={formData.priceCurrency} onValueChange={(value) => setFormData({ ...formData, priceCurrency: value })}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="INR">₹</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Label htmlFor="price">Price (USD)</Label>
+          <Input
+            id="price"
+            type="number"
+            step="0.01"
+            value={formData.price}
+            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+            placeholder="2500.00"
+          />
+          <p className="text-xs text-muted-foreground">Optional: Enter a separate USD price for display</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="priceInr">Price (INR) *</Label>
+          <Input
+            id="priceInr"
+            type="number"
+            step="0.01"
+            value={formData.priceInr}
+            onChange={(e) => setFormData({ ...formData, priceInr: e.target.value })}
+            placeholder="200000.00"
+          />
         </div>
       </div>
 

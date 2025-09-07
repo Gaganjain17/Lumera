@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Heart, ShoppingBag, Menu, ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import {
 import { useAdminAuth } from '@/context/admin-auth-context';
 import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
+import { categories, subscribeCategories, loadCategoriesFromStorage } from '@/lib/products';
 
 
 function NavItem({ href, children }: { href: string; children: React.ReactNode }) {
@@ -25,44 +27,30 @@ function NavItem({ href, children }: { href: string; children: React.ReactNode }
 }
 
 function GemstoneDropdown() {
-  const gemstones = [
-    { name: 'Ruby (Manik)', slug: 'ruby' },
-    { name: 'Emerald (Panna)', slug: 'emerald' },
-    { name: 'Yellow Sapphire (Pukhraj)', slug: 'yellow-sapphire' },
-    { name: 'Blue Sapphire (Neelam)', slug: 'blue-sapphire' },
-    { name: 'Coral (Moonga)', slug: 'coral' },
-    { name: 'Garnet (Gomed)', slug: 'garnet' },
-    { name: 'Pink Sapphire', slug: 'pink-sapphire' },
-    { name: 'Diamond (Heera)', slug: 'diamond' },
-    { name: 'Pearl (Moti)', slug: 'pearl' },
-    { name: 'Padparadscha', slug: 'padparadscha-sapphire' },
-    { name: 'Opal (Doodh Patthar)', slug: 'opal' },
-    { name: 'Amethyst (Jamunia)', slug: 'amethyst' },
-    { name: 'Citrine (Sitara)', slug: 'citrine' },
-    { name: 'Tanzanite', slug: 'tanzanite' },
-    { name: 'Alexandrite', slug: 'alexandrite' },
-    { name: 'Moonstone (Chandrakant)', slug: 'moonstone' },
-    { name: 'Lapis Lazuli', slug: 'lapis-lazuli' },
-    { name: 'Turquoise (Firoza)', slug: 'turquoise' },
-    { name: 'Peridot', slug: 'peridot' },
-    { name: 'Topaz (Pushkaraj)', slug: 'topaz' },
-    { name: 'Aquamarine', slug: 'aquamarine' },
-    { name: 'Spinel', slug: 'spinel' },
-    { name: 'Zircon', slug: 'zircon' },
-    { name: 'Tourmaline', slug: 'tourmaline' },
-  ]
+  const [dynamicCategories, setDynamicCategories] = useState(categories);
+
+  useEffect(() => {
+    // Load categories immediately and update state
+    loadCategoriesFromStorage();
+    setDynamicCategories([...categories]);
+    
+    // Subscribe to future changes
+    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
+    return () => unsubscribe();
+  }, []);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="hover:text-primary transition-colors p-0 h-auto hover:bg-transparent -mr-2">
-          Gemstones
+          Categories
           <ChevronDown className="h-4 w-4 ml-1" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {gemstones.map(gem => (
-           <DropdownMenuItem key={gem.slug} asChild>
-             <Link href={`/category/${gem.slug}`}>{gem.name}</Link>
+        {dynamicCategories.map(cat => (
+           <DropdownMenuItem key={cat.slug} asChild>
+             <Link href={`/category/${cat.slug}`}>{cat.name}</Link>
            </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -119,13 +107,20 @@ export default function Header() {
   const { isAuthenticated } = useAdminAuth();
   const { cartItems } = useCart();
   const { wishlistItems } = useWishlist();
+  const [dynamicCategories, setDynamicCategories] = useState(categories);
   const navItems = [
-    { name: 'Rings', href: '/category/rings' },
-    { name: 'Necklaces', href: '/category/necklaces' },
-    { name: 'Bracelets', href: '/category/bracelets' },
-    { name: 'Earrings', href: '/category/earrings' },
     { name: 'Trending', href: '/category/trending' },
   ];
+
+  useEffect(() => {
+    // Load categories immediately and update state
+    loadCategoriesFromStorage();
+    setDynamicCategories([...categories]);
+    
+    // Subscribe to future changes
+    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
+    return () => unsubscribe();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
@@ -156,12 +151,12 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="hidden md:inline-flex">
+          <Button variant="ghost" size="icon" className="hidden md:inline-flex hover:text-primary transition-colors">
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>
           </Button>
           <Link href="/wishlist">
-            <Button variant="ghost" size="icon" className="hidden md:inline-flex relative">
+            <Button variant="ghost" size="icon" className="hidden md:inline-flex relative hover:text-primary transition-colors">
               <Heart className="h-5 w-5" />
               {wishlistItems.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -172,7 +167,7 @@ export default function Header() {
             </Button>
           </Link>
           <Link href="/cart">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative hover:text-primary transition-colors">
               <ShoppingBag className="h-5 w-5" />
               {cartItems.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -183,7 +178,7 @@ export default function Header() {
             </Button>
           </Link>
           <Link href={isAuthenticated ? "/admin" : "/admin/login"}>
-            <Button variant="outline" size="sm" className="hidden md:inline-flex">
+            <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
               {isAuthenticated ? 'Admin Panel' : 'Admin Login'}
             </Button>
           </Link>
@@ -197,6 +192,7 @@ export default function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
+                <div className="sr-only"><SheetTitle>Mobile navigation</SheetTitle></div>
                 <nav className="flex flex-col gap-6 mt-8">
                   <Link href="/" className="text-lg font-medium hover:text-primary transition-colors">Home</Link>
                   {navItems.map(item => (
@@ -207,34 +203,13 @@ export default function Header() {
                   <div className="space-y-3">
                     <details className="group">
                       <summary className="text-lg font-medium text-foreground cursor-pointer list-none flex items-center justify-between hover:text-primary transition-colors">
-                        Gemstones
+                        Categories
                         <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
                       </summary>
                       <div className="pl-4 space-y-2 mt-2 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                        <Link href="/category/ruby" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Ruby (Manik)</Link>
-                        <Link href="/category/emerald" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Emerald (Panna)</Link>
-                        <Link href="/category/yellow-sapphire" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Yellow Sapphire (Pukhraj)</Link>
-                        <Link href="/category/blue-sapphire" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Blue Sapphire (Neelam)</Link>
-                        <Link href="/category/coral" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Coral (Moonga)</Link>
-                        <Link href="/category/garnet" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Garnet (Gomed)</Link>
-                        <Link href="/category/diamond" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Diamond (Heera)</Link>
-                        <Link href="/category/pearl" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Pearl (Moti)</Link>
-                        <Link href="/category/pink-sapphire" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Pink Sapphire</Link>
-                        <Link href="/category/padparadscha-sapphire" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Padparadscha</Link>
-                        <Link href="/category/opal" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Opal (Doodh Patthar)</Link>
-                        <Link href="/category/amethyst" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Amethyst (Jamunia)</Link>
-                        <Link href="/category/citrine" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Citrine (Sitara)</Link>
-                        <Link href="/category/tanzanite" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Tanzanite</Link>
-                        <Link href="/category/alexandrite" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Alexandrite</Link>
-                        <Link href="/category/moonstone" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Moonstone (Chandrakant)</Link>
-                        <Link href="/category/lapis-lazuli" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Lapis Lazuli</Link>
-                        <Link href="/category/turquoise" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Turquoise (Firoza)</Link>
-                        <Link href="/category/peridot" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Peridot</Link>
-                        <Link href="/category/topaz" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Topaz (Pushkaraj)</Link>
-                        <Link href="/category/aquamarine" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Aquamarine</Link>
-                        <Link href="/category/spinel" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Spinel</Link>
-                        <Link href="/category/zircon" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Zircon</Link>
-                        <Link href="/category/tourmaline" className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">Tourmaline</Link>
+                        {dynamicCategories.map(cat => (
+                          <Link key={cat.slug} href={`/category/${cat.slug}`} className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">{cat.name}</Link>
+                        ))}
                       </div>
                     </details>
                   </div>

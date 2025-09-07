@@ -89,6 +89,85 @@ export const categories: Category[] = [
   }
 ];
 
+// Simple in-memory pub/sub to reflect category changes across admin screens
+export type CategoriesListener = (next: Category[]) => void;
+const categoriesListeners: CategoriesListener[] = [];
+
+// Persistence (client-side only)
+const CATEGORIES_STORAGE_KEY = 'lumera_categories_v1';
+const PRODUCTS_STORAGE_KEY = 'lumera_products_v1';
+function isBrowser(): boolean {
+  return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+}
+
+export function loadCategoriesFromStorage(): void {
+  if (!isBrowser()) return;
+  try {
+    const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    if (!raw) return;
+    const saved: Category[] = JSON.parse(raw);
+    if (Array.isArray(saved) && saved.length > 0) {
+      categories.length = 0;
+      categories.push(...saved);
+      categoriesListeners.forEach((listener) => listener(categories));
+    }
+  } catch {
+    // ignore corrupted storage
+  }
+}
+
+export function loadProductsFromStorage(): void {
+  if (!isBrowser()) return;
+  try {
+    const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+    if (!raw) return;
+    const saved: Product[] = JSON.parse(raw);
+    if (Array.isArray(saved) && saved.length > 0) {
+      products.length = 0;
+      products.push(...saved);
+    }
+  } catch {
+    // ignore corrupted storage
+  }
+}
+
+export function setProducts(next: Product[]): void {
+  products.length = 0;
+  products.push(...next);
+  if (isBrowser()) {
+    try {
+      localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+    } catch {
+      // storage quota or other issues ignored
+    }
+  }
+}
+
+export function getCategories(): Category[] {
+  return categories;
+}
+
+export function setCategories(next: Category[]): void {
+  categories.length = 0;
+  categories.push(...next);
+  categoriesListeners.forEach((listener) => listener(categories));
+  if (isBrowser()) {
+    try {
+      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    } catch {
+      // storage quota or other issues ignored
+    }
+  }
+}
+
+export function subscribeCategories(listener: CategoriesListener): () => void {
+  categoriesListeners.push(listener);
+  return () => {
+    const index = categoriesListeners.indexOf(listener);
+    if (index !== -1) categoriesListeners.splice(index, 1);
+  };
+}
+
 export const products: Product[] = [
   { id: 1, name: "Solitaire Diamond Ring", price: 2500, image: "https://picsum.photos/800/800?r=1", hint: "diamond ring", description: "A classic and timeless solitaire diamond ring, featuring a brilliant-cut diamond set in a 14k white gold band. The epitome of elegance and simplicity.", categoryId: 4, subHeading: "Pure Diamond and Gold" },
   { id: 2, name: "Sapphire Pendant Necklace", price: 1800, image: "https://picsum.photos/800/800?r=2", hint: "sapphire necklace", description: "A stunning oval-cut sapphire surrounded by a halo of sparkling diamonds, hanging from a delicate white gold chain. A perfect 'something blue'.", categoryId: 5, subHeading: "Natural Sapphire and Diamonds" },

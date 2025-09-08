@@ -162,3 +162,4 @@ export default function GemstonesCategoryPage({ params }: CategoryPageProps) {
 }
 
 
+

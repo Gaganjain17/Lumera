@@ -437,7 +437,7 @@ function ProductForm({
         />
       </div>
 
-      {formData.categoryId && getCategoryById(parseInt(formData.categoryId))?.name === 'Gemstones' && (
+      {formData.categoryId && getCategoryById(parseInt(formData.categoryId))?.type === 'gemstone' && (
         <div className="space-y-2">
           <Label htmlFor="subCategory">Sub Category</Label>
           <Select value={formData.subCategory} onValueChange={(value) => setFormData({ ...formData, subCategory: value })}>

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { Instagram } from 'lucide-react';
+import { LucidePhoneCall, MapPin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -15,31 +16,46 @@ export default function Footer() {
             </Link>
             <p className="text-sm text-muted-foreground">Crafting memories, one jewel at a time.</p>
             <div className="flex gap-4 pt-2">
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors"><Facebook size={20} /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors"><Instagram size={20} /></Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors"><Twitter size={20} /></Link>
+              <Link href="https://www.instagram.com/official_lumerafinegems?igsh=MWV6dDZhMWRiMnNkeA%3D%3D&utm_source=qr" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Instagram">
+                <Instagram size={20} />
+              </Link>
+              <Link href="https://wa.me/919987312555" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="WhatsApp">
+                <LucidePhoneCall size={20} />
+              </Link>
+              <Link href="https://maps.app.goo.gl/C8uCUbNnuFbgAuQr8" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Google Maps">
+                <MapPin size={20} />
+              </Link>
             </div>
           </div>
           
           <div className='lg:col-span-2'>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               <div>
-                <h4 className="font-semibold mb-4 font-headline text-primary">Shop</h4>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li><Link href="#" className="hover:text-primary transition-colors">New Arrivals</Link></li>
-                  <li><Link href="#" className="hover:text-primary transition-colors">Best Sellers</Link></li>
-                  <li><Link href="#" className="hover:text-primary transition-colors">Rings</Link></li>
-                  <li><Link href="#" className="hover:text-primary transition-colors">Necklaces</Link></li>
-                </ul>
+                <h4 className="font-semibold mb-4 font-headline text-primary">Contact</h4>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <div>
+                    <div className="font-medium text-foreground">Office Address:</div>
+                    <p>
+                      Office No. 408, 4th Floor, DD PLAZA, Opposite Khammniwala, Nashta Gali,<br />
+                      3rd Agiyari Lane, Zaveri Bazar, Mumbai - 400002
+                    </p>
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground">Mobile:</div>
+                    <Link href="https://wa.me/919987312555" target="_blank" className="hover:text-primary transition-colors">+91 9987312555</Link>
+                  </div>
+                  <div>
+                    <div className="font-medium text-foreground">Instagram:</div>
+                    <Link href="https://www.instagram.com/official_lumerafinegems?igsh=MWV6dDZhMWRiMnNkeA%3D%3D&utm_source=qr" target="_blank" className="hover:text-primary transition-colors">@Official_lumerafinegems</Link>
+                  </div>
+                </div>
               </div>
               <div>
-                <h4 className="font-semibold mb-4 font-headline text-primary">Company</h4>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li><Link href="#" className="hover:text-primary transition-colors">About Us</Link></li>
-                  <li><Link href="#" className="hover:text-primary transition-colors">Contact</Link></li>
-                  <li><Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-                  <li><Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-                </ul>
+                <h4 className="font-semibold mb-4 font-headline text-primary">Visit Us</h4>
+                <p className="text-sm text-muted-foreground mb-3">Find our showroom on Google Maps.</p>
+                <Link href="https://maps.app.goo.gl/C8uCUbNnuFbgAuQr8" target="_blank" className="inline-flex items-center gap-2 text-primary hover:underline">
+                  <MapPin size={18} /> View on Google Maps
+                </Link>
               </div>
             </div>
           </div>

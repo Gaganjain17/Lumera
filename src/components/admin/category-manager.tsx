@@ -10,11 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Search, Image as ImageIcon } from 'lucide-react';
-import { categories, Category, updateCategoryProductCounts, setCategories, subscribeCategories, loadCategoriesFromStorage } from '@/lib/products';
+import { categories, Category, updateCategoryProductCounts, setCategories, subscribeCategories, loadCategoriesFromStorage, CategoryType } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 
-export default function CategoryManager() {
-  const [categoryList, setCategoryList] = useState<Category[]>(categories);
+export default function CategoryManager({ type }: { type: CategoryType }) {
+  const [categoryList, setCategoryList] = useState<Category[]>(categories.filter(c => c.type === type));
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -39,9 +39,9 @@ export default function CategoryManager() {
   // Load from localStorage on mount
   useEffect(() => {
     loadCategoriesFromStorage();
-    const unsubscribe = subscribeCategories((next) => setCategoryList([...next]));
+    const unsubscribe = subscribeCategories((next) => setCategoryList(next.filter(c => c.type === type)));
     return () => unsubscribe();
-  }, []);
+  }, [type]);
 
   const resetForm = () => {
     setFormData({
@@ -83,17 +83,18 @@ export default function CategoryManager() {
     }
 
     const newCategory: Category = {
-      id: Math.max(...categoryList.map(c => c.id)) + 1,
+      id: Math.max(0, ...categories.map(c => c.id)) + 1,
       name: formData.name,
       slug: slug,
       description: formData.description,
       image: formData.image,
-      productCount: 0
+      productCount: 0,
+      type
     };
 
-    const next = [...categoryList, newCategory];
-    setCategoryList(next);
-    setCategories(next);
+    const nextAll = [...categories, newCategory];
+    setCategoryList(nextAll.filter(c => c.type === type));
+    setCategories(nextAll);
     resetForm();
     setIsAddDialogOpen(false);
     
@@ -133,9 +134,9 @@ export default function CategoryManager() {
       image: formData.image
     };
 
-    const next = categoryList.map(c => c.id === editingCategory.id ? updatedCategory : c);
-    setCategoryList(next);
-    setCategories(next);
+    const nextAll = categories.map(c => c.id === editingCategory.id ? { ...updatedCategory, type } : c);
+    setCategoryList(nextAll.filter(c => c.type === type));
+    setCategories(nextAll);
     resetForm();
     setIsEditDialogOpen(false);
     setEditingCategory(null);
@@ -149,9 +150,9 @@ export default function CategoryManager() {
   const handleDeleteCategory = () => {
     if (!deletingCategory) return;
     
-    const next = categoryList.filter(c => c.id !== deletingCategory.id);
-    setCategoryList(next);
-    setCategories(next);
+    const nextAll = categories.filter(c => c.id !== deletingCategory.id);
+    setCategoryList(nextAll.filter(c => c.type === type));
+    setCategories(nextAll);
     setIsDeleteDialogOpen(false);
     setDeletingCategory(null);
     
@@ -182,8 +183,8 @@ export default function CategoryManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Category Management</h2>
-          <p className="text-gray-600">Manage product categories and their organization</p>
+          <h2 className="text-2xl font-bold">{type === 'jewel' ? 'Jewels Management' : 'Gemstones Management'}</h2>
+          <p className="text-gray-600">Manage {type === 'jewel' ? 'jewel' : 'gemstone'} categories</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
@@ -195,7 +196,7 @@ export default function CategoryManager() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add New Category</DialogTitle>
-              <DialogDescription>Create a new product category</DialogDescription>
+              <DialogDescription>Create a new {type} category</DialogDescription>
             </DialogHeader>
             <CategoryForm 
               formData={formData} 
@@ -232,7 +233,7 @@ export default function CategoryManager() {
       <Card>
         <CardHeader>
           <CardTitle>Categories</CardTitle>
-          <CardDescription>All product categories in your store</CardDescription>
+          <CardDescription>{type === 'jewel' ? 'Jewels' : 'Gemstones'} subcategories</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>

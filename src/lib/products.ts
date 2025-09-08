@@ -1,6 +1,8 @@
 // This is a new file to store product data
 export const USD_TO_INR_RATE = 83.50;
 
+export type CategoryType = 'jewel' | 'gemstone';
+
 export interface Category {
   id: number;
   name: string;
@@ -8,6 +10,7 @@ export interface Category {
   description: string;
   image: string;
   productCount: number;
+  type: CategoryType;
 }
 
 export interface Product {
@@ -25,11 +28,12 @@ export interface Product {
 export const categories: Category[] = [
   { 
     id: 1, 
-    name: "Emeralds", 
-    slug: "emeralds", 
+    name: "Emerald", 
+    slug: "emerald", 
     description: "Precious green gemstones known for their vibrant color and astrological significance",
     image: "https://picsum.photos/400/300?r=emerald",
-    productCount: 0
+    productCount: 0,
+    type: 'gemstone'
   },
   { 
     id: 2, 
@@ -37,7 +41,8 @@ export const categories: Category[] = [
     slug: "ruby", 
     description: "Deep red gemstones symbolizing passion, energy, and success",
     image: "https://picsum.photos/400/300?r=ruby",
-    productCount: 0
+    productCount: 0,
+    type: 'gemstone'
   },
   { 
     id: 3, 
@@ -45,7 +50,8 @@ export const categories: Category[] = [
     slug: "yellow-sapphire", 
     description: "Bright yellow gemstones associated with wisdom and prosperity",
     image: "https://picsum.photos/400/300?r=yellow-sapphire",
-    productCount: 0
+    productCount: 0,
+    type: 'gemstone'
   },
   { 
     id: 4, 
@@ -53,7 +59,8 @@ export const categories: Category[] = [
     slug: "rings", 
     description: "Elegant rings featuring precious stones and metals",
     image: "https://picsum.photos/400/300?r=rings",
-    productCount: 0
+    productCount: 0,
+    type: 'jewel'
   },
   { 
     id: 5, 
@@ -61,7 +68,8 @@ export const categories: Category[] = [
     slug: "necklaces", 
     description: "Stunning necklaces and pendants for every occasion",
     image: "https://picsum.photos/400/300?r=necklaces",
-    productCount: 0
+    productCount: 0,
+    type: 'jewel'
   },
   { 
     id: 6, 
@@ -69,7 +77,8 @@ export const categories: Category[] = [
     slug: "earrings", 
     description: "Beautiful earrings from studs to statement pieces",
     image: "https://picsum.photos/400/300?r=earrings",
-    productCount: 0
+    productCount: 0,
+    type: 'jewel'
   },
   { 
     id: 7, 
@@ -77,15 +86,17 @@ export const categories: Category[] = [
     slug: "bracelets", 
     description: "Elegant bracelets and bangles for wrist adornment",
     image: "https://picsum.photos/400/300?r=bracelets",
-    productCount: 0
+    productCount: 0,
+    type: 'jewel'
   },
   { 
     id: 8, 
-    name: "Gemstones", 
-    slug: "gemstones", 
-    description: "Loose precious and semi-precious gemstones",
-    image: "https://picsum.photos/400/300?r=gemstones",
-    productCount: 0
+    name: "Blue Sapphire", 
+    slug: "blue-sapphire", 
+    description: "A powerful stone known for its quick-acting results and royal blue color",
+    image: "https://picsum.photos/400/300?r=blue-sapphire",
+    productCount: 0,
+    type: 'gemstone'
   }
 ];
 
@@ -105,10 +116,31 @@ export function loadCategoriesFromStorage(): void {
   try {
     const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
     if (!raw) return;
-    const saved: Category[] = JSON.parse(raw);
-    if (Array.isArray(saved) && saved.length > 0) {
+    const savedRaw: any[] = JSON.parse(raw);
+    if (Array.isArray(savedRaw) && savedRaw.length > 0) {
+      const migrated: Category[] = savedRaw.map((c: any, index: number) => {
+        // Infer type if missing
+        let inferred: CategoryType | undefined = c.type;
+        if (!inferred) {
+          const slug: string = (c.slug || '').toString();
+          const jewelSlugs = ['rings', 'necklaces', 'earrings', 'bracelets'];
+          const gemstoneSlugs = ['emerald', 'ruby', 'yellow-sapphire', 'blue-sapphire'];
+          if (jewelSlugs.includes(slug)) inferred = 'jewel';
+          else if (gemstoneSlugs.includes(slug)) inferred = 'gemstone';
+          else inferred = 'jewel';
+        }
+        return {
+          id: typeof c.id === 'number' ? c.id : index + 1,
+          name: c.name || '',
+          slug: c.slug || '',
+          description: c.description || '',
+          image: c.image || '',
+          productCount: typeof c.productCount === 'number' ? c.productCount : 0,
+          type: inferred,
+        } as Category;
+      });
       categories.length = 0;
-      categories.push(...saved);
+      categories.push(...migrated);
       categoriesListeners.forEach((listener) => listener(categories));
     }
   } catch {
@@ -202,12 +234,26 @@ export function getCategoryBySlug(slug: string): Category | undefined {
   return categories.find(cat => cat.slug === slug);
 }
 
+export function getCategoriesByType(type: CategoryType): Category[] {
+  return categories.filter(cat => cat.type === type);
+}
+
+export function getCategoryBySlugWithinType(type: CategoryType, slug: string): Category | undefined {
+  return categories.find(cat => cat.type === type && cat.slug === slug);
+}
+
 export function getProductsByCategory(categoryId: number): Product[] {
   return products.filter(product => product.categoryId === categoryId);
 }
 
 export function getProductsByCategorySlug(slug: string): Product[] {
   const category = getCategoryBySlug(slug);
+  if (!category) return [];
+  return getProductsByCategory(category.id);
+}
+
+export function getProductsByTypeAndCategorySlug(type: CategoryType, slug: string): Product[] {
+  const category = getCategoryBySlugWithinType(type, slug);
   if (!category) return [];
   return getProductsByCategory(category.id);
 }

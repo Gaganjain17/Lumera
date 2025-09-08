@@ -59,14 +59,18 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Products
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
+            <TabsTrigger value="jewels" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
-              Categories
+              Jewels
+            </TabsTrigger>
+            <TabsTrigger value="gemstones" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Gemstones
             </TabsTrigger>
             <TabsTrigger value="orders" className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4" />
@@ -90,8 +94,11 @@ export default function AdminDashboard() {
             <AdminProductManager />
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-6">
-            <CategoryManager />
+          <TabsContent value="jewels" className="mt-6">
+            <CategoryManager type={'jewel'} />
+          </TabsContent>
+          <TabsContent value="gemstones" className="mt-6">
+            <CategoryManager type={'gemstone'} />
           </TabsContent>
 
           <TabsContent value="orders" className="mt-6">

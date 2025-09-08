@@ -63,7 +63,7 @@ function CategorySection() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 lg:gap-8">
           {dynamicCategories.map(category => (
-            <CategoryCard key={category.id} category={category} />
+            <CategoryCard key={category.slug} category={category} />
           ))}
         </div>
       </div>

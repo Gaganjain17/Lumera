@@ -12,7 +12,7 @@ interface CategoryCardProps {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <Link href={`/category/${category.slug}`} className="block">
+    <Link href={category.type === 'jewel' ? `/jewels/${category.slug}` : `/gemstones/${category.slug}`} className="block">
       <Card className="group cursor-pointer transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] border-0 bg-gradient-to-br from-white to-gray-50 overflow-hidden">
         <CardContent className="p-0">
           <div className="relative aspect-[4/3] overflow-hidden">
@@ -29,7 +29,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
               <div className="transform transition-all duration-500 group-hover:translate-y-[-4px]">
-                <h3 className="text-2xl font-bold mb-3 tracking-wide">{category.name}</h3>
+                <h3 className="text-2xl font-bold mb-3 tracking-wide text-primary">{category.name}</h3>
                 <p className="text-sm text-gray-200 mb-4 line-clamp-2 leading-relaxed">
                   {category.description}
                 </p>

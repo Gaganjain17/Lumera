@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/layout/header';
@@ -115,7 +116,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           <div className="container">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
               <div>
-                <h2 className="text-2xl font-bold">Products in {category.name}</h2>
+                <h2 className="text-2xl font-bold text-primary">Products in {category.name}</h2>
                 <p className="text-muted-foreground">
                   Showing {filteredProducts.length} of {products.length} products
                 </p>
@@ -173,34 +174,38 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         {/* Related Categories */}
         <section className="py-16">
           <div className="container">
-            <h2 className="text-2xl font-bold text-center mb-8">Explore Other Categories</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 lg:gap-4">
-              {dynamicCategories
-                .filter(cat => cat.slug !== resolvedParams.slug)
-                .slice(0, 7)
-                .map(category => (
-                  <Link
-                    key={category.id}
-                    href={`/category/${category.slug}`}
-                    className="group block"
-                  >
-                    <div className="relative overflow-hidden rounded-lg">
-                      <Image
-                        src={category.image}
-                        alt={category.name}
-                        width={200}
-                        height={150}
-                        className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-                      <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                        <h3 className="font-semibold text-sm">{category.name}</h3>
-                        <p className="text-xs text-gray-200">{category.productCount} products</p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-            </div>
+            <h2 className="text-2xl font-bold text-center mb-8 text-primary">Explore Other Categories</h2>
+            <Carousel opts={{ align: 'start' }}>
+              <CarouselContent>
+                {dynamicCategories
+                  .filter(cat => cat.slug !== resolvedParams.slug)
+                  .map(category => (
+                    <CarouselItem key={category.slug} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6 xl:basis-1/7">
+                      <Link
+                        href={category.type === 'jewel' ? `/jewels/${category.slug}` : `/gemstones/${category.slug}`}
+                        className="group block"
+                      >
+                        <div className="relative overflow-hidden rounded-lg">
+                          <Image
+                            src={category.image}
+                            alt={category.name}
+                            width={240}
+                            height={180}
+                            className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                            <h3 className="font-semibold text-sm">{category.name}</h3>
+                            <p className="text-xs text-gray-200">{category.productCount} products</p>
+                          </div>
+                        </div>
+                      </Link>
+                    </CarouselItem>
+                  ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </section>
       </main>

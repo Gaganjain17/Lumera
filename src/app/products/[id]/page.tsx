@@ -20,7 +20,8 @@ import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { products, customizationCosts, USD_TO_INR_RATE, getCategoryById } from '@/lib/products';
+import { products, customizationCosts, USD_TO_INR_RATE, getCategoryById, categories, loadCategoriesFromStorage } from '@/lib/products';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { getBankDetails } from '@/lib/bank';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -138,6 +139,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const basePriceINR = product.price * USD_TO_INR_RATE;
   const bank = getBankDetails();
   const [qrOpen, setQrOpen] = useState(false);
+  const [dynamicCategories, setDynamicCategories] = useState(categories);
+
+  useEffect(() => {
+    loadCategoriesFromStorage();
+    setDynamicCategories([...categories]);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
@@ -367,6 +374,45 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </main>
+      {/* Our Other Collection */}
+      <section className="py-16">
+        <div className="container">
+          <h2 className="text-2xl font-bold text-center mb-8 text-primary">Our Other Collection</h2>
+          <div className="relative">
+            <Carousel opts={{ align: 'start' }}>
+              <CarouselContent>
+                {dynamicCategories
+                  .filter(cat => cat.id !== product.categoryId)
+                  .map(category => (
+                    <CarouselItem key={category.slug} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6 xl:basis-1/7">
+                      <Link
+                        href={category.type === 'jewel' ? `/jewels/${category.slug}` : `/gemstones/${category.slug}`}
+                        className="group block"
+                      >
+                        <div className="relative overflow-hidden rounded-lg">
+                          <Image
+                            src={category.image}
+                            alt={category.name}
+                            width={240}
+                            height={180}
+                            className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+                          <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                            <h3 className="font-semibold text-sm">{category.name}</h3>
+                            <p className="text-xs text-gray-200">{category.productCount} products</p>
+                          </div>
+                        </div>
+                      </Link>
+                    </CarouselItem>
+                  ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </div>
+        </div>
+      </section>
       <Footer />
     </div>
   );

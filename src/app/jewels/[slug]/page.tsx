@@ -165,3 +165,4 @@ export default function JewelsCategoryPage({ params }: CategoryPageProps) {
 
 
 
+

@@ -11,15 +11,15 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="space-y-4 lg:col-span-1">
             <Link href="/" className="flex flex-col items-start leading-none">
-              <span className="font-headline text-2xl font-bold text-primary tracking-wider">LUMERA</span>
+              <span className="font-headline text-2xl font-bold text-primary tracking-wider">Luméra</span>
               <span className="text-[0.6rem] text-muted-foreground tracking-[0.2em]">FINE GEMS &amp; JEWELS</span>
             </Link>
-            <p className="text-sm text-muted-foreground">Crafting memories, one jewel at a time.</p>
+            <p className="text-sm text-muted-foreground">An Timeless Luxury</p>
             <div className="flex gap-4 pt-2">
               <Link href="https://www.instagram.com/official_lumerafinegems?igsh=MWV6dDZhMWRiMnNkeA%3D%3D&utm_source=qr" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Instagram">
                 <Instagram size={20} />
               </Link>
-              <Link href="https://wa.me/919987312555" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="WhatsApp">
+              <Link href="tel:+919987312555" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Call Us">
                 <LucidePhoneCall size={20} />
               </Link>
               <Link href="https://maps.app.goo.gl/C8uCUbNnuFbgAuQr8" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Google Maps">
@@ -42,7 +42,10 @@ export default function Footer() {
                   </div>
                   <div>
                     <div className="font-medium text-foreground">Mobile:</div>
-                    <Link href="https://wa.me/919987312555" target="_blank" className="hover:text-primary transition-colors">+91 9987312555</Link>
+                    <div className="flex flex-col gap-1">
+                      <Link href="tel:+919987312555" className="hover:text-primary transition-colors">+91 9987312555</Link>
+                      <Link href="tel:+917718071474" className="hover:text-primary transition-colors">+91 7718071474</Link>
+                    </div>
                   </div>
                   <div>
                     <div className="font-medium text-foreground">Instagram:</div>

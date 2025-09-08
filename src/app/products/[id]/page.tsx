@@ -4,6 +4,11 @@
 import { useState, useMemo, useEffect, use } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { addInquiry } from '@/lib/inquiries';
+import { Dialog as UIDialog, DialogContent as UIDialogContent, DialogHeader as UIDialogHeader, DialogTitle as UIDialogTitle, DialogFooter as UIDialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -16,6 +21,10 @@ import { useWishlist } from '@/context/wishlist-context';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { products, customizationCosts, USD_TO_INR_RATE, getCategoryById } from '@/lib/products';
+import { getBankDetails } from '@/lib/bank';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 function getProduct(id: string) {
   return products.find(p => p.id === parseInt(id));
@@ -25,6 +34,22 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const resolvedParams = use(params);
   const product = getProduct(resolvedParams.id);
   const { addToCart } = useCart();
+  const [expertOpen, setExpertOpen] = useState(false);
+  const [expertForm, setExpertForm] = useState({ name: '', email: '', mobile: '', message: '' });
+  const handleSubmitInquiry = () => {
+    if (!expertForm.name || !expertForm.mobile || !expertForm.message) return;
+    addInquiry({
+      name: expertForm.name,
+      email: expertForm.email || undefined,
+      mobile: expertForm.mobile,
+      message: expertForm.message,
+      productId: product.id,
+      productName: product.name,
+    });
+    setExpertOpen(false);
+    setExpertForm({ name: '', email: '', mobile: '', message: '' });
+    toast({ title: 'Query Sent', description: 'Our expert will contact you shortly.' });
+  };
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
   const isWishlisted = isInWishlist(product?.id || 0);
@@ -111,6 +136,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   };
   
   const basePriceINR = product.price * USD_TO_INR_RATE;
+  const bank = getBankDetails();
+  const [qrOpen, setQrOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
@@ -250,8 +277,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                  </p>
               </div>
               
-              <div className="flex items-center gap-4">
-                <Button size="lg" className="flex-1" onClick={handleAddToCart}>Add to Cart</Button>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Button size="lg" className="w-full" onClick={handleAddToCart}>Add to Cart</Button>
+                <Link href={`/checkout?buyNow=${product.id}`}>
+                  <Button size="lg" className="w-full">Buy Now</Button>
+                </Link>
+                <Button size="lg" variant="outline" className="w-full" onClick={() => setExpertOpen(true)}>Talk with Expert</Button>
                 <Button 
                   variant="outline" 
                   size="icon" 
@@ -274,6 +305,63 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 >
                   <Heart className={`h-6 w-6 ${isWishlisted ? 'fill-current' : ''}`} />
                 </Button>
+              </div>
+
+              <UIDialog open={expertOpen} onOpenChange={setExpertOpen}>
+                <UIDialogContent className="max-w-lg">
+                  <UIDialogHeader>
+                    <UIDialogTitle>Talk with Expert</UIDialogTitle>
+                  </UIDialogHeader>
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Input placeholder="Name*" value={expertForm.name} onChange={(e) => setExpertForm({ ...expertForm, name: e.target.value })} />
+                      <Input placeholder="Email" type="email" value={expertForm.email} onChange={(e) => setExpertForm({ ...expertForm, email: e.target.value })} />
+                    </div>
+                    <Input placeholder="Mobile*" value={expertForm.mobile} onChange={(e) => setExpertForm({ ...expertForm, mobile: e.target.value })} />
+                    <Textarea placeholder="Message*" rows={4} value={expertForm.message} onChange={(e) => setExpertForm({ ...expertForm, message: e.target.value })} />
+                    <div className="flex items-center justify-between">
+                      <a href={`https://wa.me/919987312555?text=${encodeURIComponent('Hello, I have a query about: ' + product.name)}`} target="_blank" className="text-primary hover:underline">Chat on WhatsApp</a>
+                      <div className="space-x-2">
+                        <Button variant="outline" onClick={() => setExpertOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSubmitInquiry}>Send</Button>
+                      </div>
+                    </div>
+                  </div>
+                </UIDialogContent>
+              </UIDialog>
+
+              {/* Bank Details */}
+              <div className="pt-6">
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="bank-details">
+                    <AccordionTrigger>Bank Details</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Card className="bg-background">
+                          <CardContent className="p-4 space-y-2 text-sm">
+                            <div><span className="font-medium text-foreground">Account Holder:</span> {bank.accountHolder}</div>
+                            <div><span className="font-medium text-foreground">Bank Name:</span> {bank.bankName}</div>
+                            <div><span className="font-medium text-foreground">Account Number:</span> {bank.accountNumber}</div>
+                            <div><span className="font-medium text-foreground">IFSC Code:</span> {bank.ifscCode}</div>
+                            <div><span className="font-medium text-foreground">Account Type:</span> {bank.accountType}</div>
+                            <div><span className="font-medium text-foreground">UPI ID:</span> {bank.upiId}</div>
+                          </CardContent>
+                        </Card>
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <button onClick={() => setQrOpen(true)} className="focus:outline-none">
+                            <img src={bank.qrImageUrl} alt="Bank QR" className="w-56 h-56 object-contain rounded border" />
+                          </button>
+                          <div className="text-xs text-muted-foreground">Scan to Pay with any UPI App</div>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+                  <DialogContent className="max-w-md">
+                    <img src={bank.qrImageUrl} alt="Bank QR Large" className="w-full h-auto" />
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>

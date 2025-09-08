@@ -11,6 +11,8 @@ import AdminStats from '@/components/admin/admin-stats';
 import ProtectedAdminRoute from '@/components/admin/protected-admin-route';
 import ChangePassword from '@/components/admin/change-password';
 import AdminUserManagement from '@/components/admin/admin-user-management';
+import BankDetailsManager from '@/components/admin/bank-details-manager';
+import InquiriesManager from '@/components/admin/inquiries-manager';
 import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function AdminDashboard() {
@@ -59,7 +61,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Products
@@ -87,6 +89,14 @@ export default function AdminDashboard() {
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Settings
+            </TabsTrigger>
+            <TabsTrigger value="bank-details" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Bank Details
+            </TabsTrigger>
+            <TabsTrigger value="inquiries" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Inquiries
             </TabsTrigger>
           </TabsList>
 
@@ -159,6 +169,13 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="bank-details" className="mt-6">
+            <BankDetailsManager />
+          </TabsContent>
+          <TabsContent value="inquiries" className="mt-6">
+            <InquiriesManager />
           </TabsContent>
         </Tabs>
       </div>

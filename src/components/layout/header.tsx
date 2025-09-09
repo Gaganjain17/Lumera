@@ -14,9 +14,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAdminAuth } from '@/context/admin-auth-context';
+import { useUserAuth } from '@/context/user-auth-context';
 import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
 import { categories, subscribeCategories, loadCategoriesFromStorage, getCategoriesByType, products, loadProductsFromStorage } from '@/lib/products';
+import AuthModal from '@/components/auth/auth-modal';
 
 
 function NavItem({ href, children }: { href: string; children: React.ReactNode }) {
@@ -136,11 +138,13 @@ function CollectionsDropdown() {
 
 export default function Header() {
   const { isAuthenticated } = useAdminAuth();
+  const { isAuthenticated: isUserAuthenticated, user, logout: userLogout } = useUserAuth();
   const { cartItems } = useCart();
   const { wishlistItems } = useWishlist();
   const [dynamicCategories, setDynamicCategories] = useState(categories);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const navItems = [
     { name: 'Trending', href: '/category/trending' },
   ];
@@ -279,6 +283,28 @@ export default function Header() {
               <span className="sr-only">Shopping Bag</span>
             </Button>
           </Link>
+          {!isUserAuthenticated ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden md:inline-flex hover:text-primary transition-colors"
+              onClick={() => setIsAuthModalOpen(true)}
+            >
+              Login / Register
+            </Button>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
+                  {user?.fullName || 'User'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={userLogout}>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          
           <Link href={isAuthenticated ? "/admin" : "/admin/login"}>
             <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
               {isAuthenticated ? 'Admin Panel' : 'Admin Login'}
@@ -328,6 +354,24 @@ export default function Header() {
                   </div>
                   <Link href="/wishlist" className="text-lg font-medium hover:text-primary transition-colors">Wishlist</Link>
                   <Link href="/cart" className="text-lg font-medium hover:text-primary transition-colors">Shopping Cart</Link>
+                  {!isUserAuthenticated ? (
+                    <button 
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="text-lg font-medium hover:text-primary transition-colors"
+                    >
+                      Login / Register
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="text-lg font-medium">{user?.fullName || 'User'}</div>
+                      <button 
+                        onClick={userLogout}
+                        className="text-base text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
                   <Link href={isAuthenticated ? "/admin" : "/admin/login"} className="text-lg font-medium hover:text-primary transition-colors">
                     {isAuthenticated ? 'Admin Panel' : 'Admin Login'}
                   </Link>
@@ -337,6 +381,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+      
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </header>
   );
 }

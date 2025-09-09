@@ -13,6 +13,7 @@ import ChangePassword from '@/components/admin/change-password';
 import AdminUserManagement from '@/components/admin/admin-user-management';
 import BankDetailsManager from '@/components/admin/bank-details-manager';
 import InquiriesManager from '@/components/admin/inquiries-manager';
+import UsersManager from '@/components/admin/users-manager';
 import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function AdminDashboard() {
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Products
@@ -97,6 +98,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="inquiries" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Inquiries
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
             </TabsTrigger>
           </TabsList>
 
@@ -176,6 +181,9 @@ export default function AdminDashboard() {
           </TabsContent>
           <TabsContent value="inquiries" className="mt-6">
             <InquiriesManager />
+          </TabsContent>
+          <TabsContent value="users" className="mt-6">
+            <UsersManager />
           </TabsContent>
         </Tabs>
       </div>

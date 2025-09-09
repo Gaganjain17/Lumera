@@ -68,7 +68,8 @@ export default function AdminProductManager() {
       categoryId: '',
       subCategory: '',
       subHeading: '',
-      rating: ''
+      
+
     });
   };
 

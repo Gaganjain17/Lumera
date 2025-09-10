@@ -8,6 +8,7 @@ import { Heart } from 'lucide-react';
 import { Product, getCategoryById } from '@/lib/products';
 import { useWishlist } from '@/context/wishlist-context';
 import { USD_TO_INR_RATE } from '@/lib/products';
+import { addCacheBusting } from '@/lib/image-utils';
 
 export default function ProductCard(product: Product) {
   const { id, name, price, image, hint, categoryId, subHeading } = product;
@@ -20,11 +21,13 @@ export default function ProductCard(product: Product) {
         <CardContent className="p-0 flex flex-col h-full">
           <div className="relative aspect-square overflow-hidden rounded-lg">
             <Image
-              src={image}
+              src={addCacheBusting(image)}
               alt={name}
               data-ai-hint={hint}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              quality={85}
             />
             <Button 
               variant="secondary" 

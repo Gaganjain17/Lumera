@@ -34,11 +34,9 @@ export default function AdminProductManager() {
     hint: '',
     description: '',
     categoryId: '',
-    subCategory: '',
     subHeading: ''
   });
 
-  const subCategories = ['emerald', 'ruby', 'yellow-sapphire', 'blue-sapphire'];
 
   // Keep categories in sync with Category Manager via subscription
   useEffect(() => {
@@ -66,10 +64,7 @@ export default function AdminProductManager() {
       hint: '',
       description: '',
       categoryId: '',
-      subCategory: '',
-      subHeading: '',
-      
-
+      subHeading: ''
     });
   };
 
@@ -94,7 +89,6 @@ export default function AdminProductManager() {
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
       description: formData.description,
       categoryId: parseInt(formData.categoryId),
-      subCategory: formData.subCategory || undefined,
       subHeading: formData.subHeading || undefined
     };
 
@@ -131,7 +125,6 @@ export default function AdminProductManager() {
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
       description: formData.description,
       categoryId: parseInt(formData.categoryId),
-      subCategory: formData.subCategory || undefined,
       subHeading: formData.subHeading || undefined
     };
 
@@ -173,7 +166,6 @@ export default function AdminProductManager() {
       hint: product.hint,
       description: product.description,
       categoryId: product.categoryId.toString(),
-      subCategory: product.subCategory || '',
       subHeading: product.subHeading || ''
     });
     setIsEditDialogOpen(true);
@@ -208,7 +200,6 @@ export default function AdminProductManager() {
               formData={formData} 
               setFormData={setFormData} 
               categories={categoryList}
-              subCategories={subCategories}
             />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
@@ -272,9 +263,6 @@ export default function AdminProductManager() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{getCategoryById(product.categoryId)?.name || 'Unknown'}</Badge>
-                    {product.subCategory && (
-                      <Badge variant="secondary" className="ml-2">{product.subCategory}</Badge>
-                    )}
                   </TableCell>
                   <TableCell>${product.price.toLocaleString()}</TableCell>
                   <TableCell>₹{(product.price * USD_TO_INR_RATE).toLocaleString('en-IN')}</TableCell>
@@ -313,12 +301,11 @@ export default function AdminProductManager() {
             <DialogTitle>Edit Product</DialogTitle>
             <DialogDescription>Update product information</DialogDescription>
           </DialogHeader>
-          <ProductForm 
-            formData={formData} 
-            setFormData={setFormData} 
-            categories={categoryList}
-            subCategories={subCategories}
-          />
+            <ProductForm 
+              formData={formData} 
+              setFormData={setFormData} 
+              categories={categoryList}
+            />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleEditProduct}>Update Product</Button>
@@ -348,13 +335,11 @@ export default function AdminProductManager() {
 function ProductForm({ 
   formData, 
   setFormData, 
-  categories, 
-  subCategories 
+  categories
 }: { 
   formData: any; 
   setFormData: (data: any) => void; 
   categories: Category[];
-  subCategories: string[];
 }) {
   return (
     <div className="grid gap-4 py-4">
@@ -438,21 +423,6 @@ function ProductForm({
         />
       </div>
 
-      {formData.categoryId && getCategoryById(parseInt(formData.categoryId))?.type === 'gemstone' && (
-        <div className="space-y-2">
-          <Label htmlFor="subCategory">Sub Category</Label>
-          <Select value={formData.subCategory} onValueChange={(value) => setFormData({ ...formData, subCategory: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select sub category" />
-            </SelectTrigger>
-            <SelectContent>
-              {subCategories.map((subCategory) => (
-                <SelectItem key={subCategory} value={subCategory}>{subCategory}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       <div className="space-y-2">
         <Label htmlFor="description">Description *</Label>

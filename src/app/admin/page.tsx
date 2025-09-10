@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Package, Users, ShoppingCart, TrendingUp, Settings, LogOut, User } from 'lucide-react';
 import AdminProductManager from '@/components/admin/product-manager';
 import CategoryManager from '@/components/admin/category-manager';
@@ -15,9 +16,11 @@ import BankDetailsManager from '@/components/admin/bank-details-manager';
 import InquiriesManager from '@/components/admin/inquiries-manager';
 import UsersManager from '@/components/admin/users-manager';
 import { useAdminAuth } from '@/context/admin-auth-context';
+import { forceRefresh } from '@/lib/cache-utils';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('products');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { user, logout } = useAdminAuth();
 
   return (
@@ -39,13 +42,36 @@ export default function AdminDashboard() {
                     {user?.role}
                   </span>
                 </div>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </Button>
-                <Button size="sm">
+                <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Store Settings</DialogTitle>
+                      <DialogDescription>Configure store preferences and settings</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Account Security</h3>
+                        <ChangePassword />
+                      </div>
+                      <div className="border-t pt-6">
+                        <h3 className="text-lg font-semibold mb-4">Store Configuration</h3>
+                        <p className="text-gray-500">Store configuration options coming soon...</p>
+                      </div>
+                      <div className="border-t pt-6">
+                        <AdminUserManagement />
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button size="sm" onClick={forceRefresh}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Quick Add
+                  Refresh Cache
                 </Button>
                 <Button variant="outline" size="sm" onClick={logout}>
                   <LogOut className="h-4 w-4 mr-2" />
@@ -62,7 +88,7 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="products" className="flex items-center gap-2">
               <Package className="h-4 w-4" />
               Products
@@ -86,10 +112,6 @@ export default function AdminDashboard() {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Analytics
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
             </TabsTrigger>
             <TabsTrigger value="bank-details" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -152,29 +174,6 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Store Settings</CardTitle>
-                <CardDescription>Configure store preferences and settings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Account Security</h3>
-                    <ChangePassword />
-                  </div>
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Store Configuration</h3>
-                    <p className="text-gray-500">Store configuration options coming soon...</p>
-                  </div>
-                  <div className="border-t pt-6">
-                    <AdminUserManagement />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="bank-details" className="mt-6">
             <BankDetailsManager />

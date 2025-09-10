@@ -21,6 +21,7 @@ import { useWishlist } from '@/context/wishlist-context';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { products, customizationCosts, USD_TO_INR_RATE, getCategoryById, categories, loadCategoriesFromStorage } from '@/lib/products';
+import { addCacheBusting } from '@/lib/image-utils';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { getBankDetails } from '@/lib/bank';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -155,12 +156,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
             <div className="relative aspect-square rounded-xl overflow-hidden shadow-lg">
               <Image 
-                src={product.image}
+                src={addCacheBusting(product.image)}
                 alt={product.name}
                 data-ai-hint={product.hint}
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+                quality={90}
               />
             </div>
             
@@ -326,11 +329,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                     <Input placeholder="Mobile*" value={expertForm.mobile} onChange={(e) => setExpertForm({ ...expertForm, mobile: e.target.value })} />
                     <Textarea placeholder="Message*" rows={4} value={expertForm.message} onChange={(e) => setExpertForm({ ...expertForm, message: e.target.value })} />
-                    <div className="flex items-center justify-between">
-                      <a href={`https://wa.me/919987312555?text=${encodeURIComponent('Hello, I have a query about: ' + product.name)}`} target="_blank" className="text-primary hover:underline">Chat on WhatsApp</a>
-                      <div className="space-x-2">
-                        <Button variant="outline" onClick={() => setExpertOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSubmitInquiry}>Send</Button>
+                    <div className="space-y-3">
+                      <a href={`https://wa.me/919987312555?text=${encodeURIComponent('Hello, I have a query about: ' + product.name)}`} target="_blank" className="block text-center text-primary hover:underline text-sm">Chat on WhatsApp</a>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setExpertOpen(false)} className="flex-1">Cancel</Button>
+                        <Button onClick={handleSubmitInquiry} className="flex-1">Send</Button>
                       </div>
                     </div>
                   </div>

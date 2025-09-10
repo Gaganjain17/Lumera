@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           <div className="space-y-4 lg:col-span-1">
             <Link href="/" className="flex flex-col items-start leading-none">
-              <span className="font-headline text-2xl font-bold text-primary tracking-wider">Luméra</span>
+              <span className="font-headline text-3xl font-bold text-primary tracking-wider">Luméra</span>
               <span className="text-[0.6rem] text-muted-foreground tracking-[0.2em]">FINE GEMS &amp; JEWELS</span>
             </Link>
             <p className="text-sm text-muted-foreground">An Timeless Luxury</p>
@@ -22,7 +22,7 @@ export default function Footer() {
               <Link href="tel:+919987312555" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Call Us">
                 <LucidePhoneCall size={20} />
               </Link>
-              <Link href="https://maps.app.goo.gl/C8uCUbNnuFbgAuQr8" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Google Maps">
+              <Link href="https://maps.app.goo.gl/t6GkXLsRjHQDujgW9?g_st=ipc" target="_blank" className="text-muted-foreground hover:text-primary transition-colors" aria-label="Google Maps">
                 <MapPin size={20} />
               </Link>
             </div>
@@ -56,7 +56,7 @@ export default function Footer() {
               <div>
                 <h4 className="font-semibold mb-4 font-headline text-primary">Visit Us</h4>
                 <p className="text-sm text-muted-foreground mb-3">Find our showroom on Google Maps.</p>
-                <Link href="https://maps.app.goo.gl/C8uCUbNnuFbgAuQr8" target="_blank" className="inline-flex items-center gap-2 text-primary hover:underline">
+                <Link href="https://maps.app.goo.gl/t6GkXLsRjHQDujgW9?g_st=ipc" target="_blank" className="inline-flex items-center gap-2 text-primary hover:underline">
                   <MapPin size={18} /> View on Google Maps
                 </Link>
               </div>

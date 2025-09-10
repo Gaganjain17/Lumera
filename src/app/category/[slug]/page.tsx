@@ -100,11 +100,13 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               </div>
               <div className="relative">
                 <Image
-                  src={category.image}
+                  src={addCacheBusting(category.image)}
                   alt={category.name}
                   width={600}
                   height={400}
                   className="rounded-lg shadow-lg"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  quality={85}
                 />
               </div>
             </div>

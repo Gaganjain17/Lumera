@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "name": "Rings",
+    "slug": "rings",
+    "description": "Elegant rings crafted with precision and love.",
+    "image": "https://placehold.co/600x400?text=Rings",
+    "productCount": 0,
+    "type": "jewel"
+  },
+  {
+    "id": 2,
+    "name": "Necklaces",
+    "slug": "necklaces",
+    "description": "Necklaces that add grace to every occasion.",
+    "image": "https://placehold.co/600x400?text=Necklaces",
+    "productCount": 0,
+    "type": "jewel"
+  },
+  {
+    "id": 3,
+    "name": "Earrings",
+    "slug": "earrings",
+    "description": "Timeless earrings for every style.",
+    "image": "https://placehold.co/600x400?text=Earrings",
+    "productCount": 0,
+    "type": "jewel"
+  },
+  {
+    "id": 4,
+    "name": "Emeralds",
+    "slug": "emeralds",
+    "description": "Premium natural emerald gemstones.",
+    "image": "https://placehold.co/600x400?text=Emeralds",
+    "productCount": 0,
+    "type": "gemstone"
+  },
+  {
+    "id": 5,
+    "name": "Rubies",
+    "slug": "rubies",
+    "description": "Rare rubies with vibrant red hues.",
+    "image": "https://placehold.co/600x400?text=Rubies",
+    "productCount": 0,
+    "type": "gemstone"
+  },
+  {
+    "id": 6,
+    "name": "Blue Sapphires",
+    "slug": "blue-sapphires",
+    "description": "Exquisite blue sapphires with deep royal color.",
+    "image": "https://placehold.co/600x400?text=Blue+Sapphires",
+    "productCount": 0,
+    "type": "gemstone"
+  }
+]

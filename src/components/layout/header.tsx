@@ -17,7 +17,7 @@ import { useAdminAuth } from '@/context/admin-auth-context';
 import { useUserAuth } from '@/context/user-auth-context';
 import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
-import { categories, subscribeCategories, loadCategoriesFromStorage, getCategoriesByType, products, loadProductsFromStorage } from '@/lib/products';
+// Use API-backed data instead of in-memory lib/products
 import AuthModal from '@/components/auth/auth-modal';
 
 
@@ -30,16 +30,18 @@ function NavItem({ href, children }: { href: string; children: React.ReactNode }
 }
 
 function JewelsDropdown() {
-  const [dynamicCategories, setDynamicCategories] = useState(categories);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    loadCategoriesFromStorage();
-    setDynamicCategories([...categories]);
-    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
-    return () => unsubscribe();
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        if (res.ok) setDynamicCategories(await res.json());
+      } catch {}
+    })();
   }, []);
 
-  const jewels = getCategoriesByType('jewel');
+  const jewels = dynamicCategories.filter((c: any) => c.type === 'jewel');
 
   return (
     <DropdownMenu>
@@ -49,8 +51,8 @@ function JewelsDropdown() {
           <ChevronDown className="h-4 w-4 ml-1" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        {jewels.map(cat => (
+          <DropdownMenuContent>
+        {jewels.map((cat: any) => (
            <DropdownMenuItem key={cat.slug} asChild>
              <Link href={`/jewels/${cat.slug}`}>{cat.name}</Link>
            </DropdownMenuItem>
@@ -61,16 +63,18 @@ function JewelsDropdown() {
 }
 
 function GemstonesDropdown() {
-  const [dynamicCategories, setDynamicCategories] = useState(categories);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    loadCategoriesFromStorage();
-    setDynamicCategories([...categories]);
-    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
-    return () => unsubscribe();
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        if (res.ok) setDynamicCategories(await res.json());
+      } catch {}
+    })();
   }, []);
 
-  const gemstones = getCategoriesByType('gemstone');
+  const gemstones = dynamicCategories.filter((c: any) => c.type === 'gemstone');
 
   return (
     <DropdownMenu>
@@ -81,7 +85,7 @@ function GemstonesDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {gemstones.map(cat => (
+        {gemstones.map((cat: any) => (
            <DropdownMenuItem key={cat.slug} asChild>
              <Link href={`/gemstones/${cat.slug}`}>{cat.name}</Link>
            </DropdownMenuItem>
@@ -141,7 +145,8 @@ export default function Header() {
   const { isAuthenticated: isUserAuthenticated, user, logout: userLogout } = useUserAuth();
   const { cartItems } = useCart();
   const { wishlistItems } = useWishlist();
-  const [dynamicCategories, setDynamicCategories] = useState(categories);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
+  const [dynamicProducts, setDynamicProducts] = useState<any[]>([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -150,14 +155,16 @@ export default function Header() {
   ];
 
   useEffect(() => {
-    // Load categories immediately and update state
-    loadCategoriesFromStorage();
-    loadProductsFromStorage();
-    setDynamicCategories([...categories]);
-    
-    // Subscribe to future changes
-    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
-    return () => unsubscribe();
+    (async () => {
+      try {
+        const [catRes, prodRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ]);
+        if (catRes.ok) setDynamicCategories(await catRes.json());
+        if (prodRes.ok) setDynamicProducts(await prodRes.json());
+      } catch {}
+    })();
   }, []);
 
   useEffect(() => {
@@ -174,7 +181,7 @@ export default function Header() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isSearchOpen]);
 
-  const filteredProducts = products.filter(p =>
+  const filteredProducts = dynamicProducts.filter((p: any) =>
     searchQuery.trim().length > 0 && (
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.hint.toLowerCase().includes(searchQuery.toLowerCase())
@@ -335,7 +342,7 @@ export default function Header() {
                         <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
                       </summary>
                       <div className="pl-4 space-y-2 mt-2 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                        {getCategoriesByType('jewel').map(cat => (
+                        {dynamicCategories.filter((c: any) => c.type === 'jewel').map((cat: any) => (
                           <Link key={cat.slug} href={`/jewels/${cat.slug}`} className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">{cat.name}</Link>
                         ))}
                       </div>
@@ -346,7 +353,7 @@ export default function Header() {
                         <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
                       </summary>
                       <div className="pl-4 space-y-2 mt-2 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                        {getCategoriesByType('gemstone').map(cat => (
+                        {dynamicCategories.filter((c: any) => c.type === 'gemstone').map((cat: any) => (
                           <Link key={cat.slug} href={`/gemstones/${cat.slug}`} className="block text-base text-muted-foreground hover:text-primary transition-colors py-1">{cat.name}</Link>
                         ))}
                       </div>

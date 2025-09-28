@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { products, Product, categories, Category, USD_TO_INR_RATE, getCategoryById, subscribeCategories, loadCategoriesFromStorage, loadProductsFromStorage, setProducts } from '@/lib/products';
+import { products, Product, categories, Category, USD_TO_INR_RATE } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminProductManager() {
@@ -40,16 +40,34 @@ export default function AdminProductManager() {
 
   // Keep categories in sync with Category Manager via subscription
   useEffect(() => {
-    loadCategoriesFromStorage();
-    loadProductsFromStorage();
-    // initialize local state from storage-loaded arrays
-    setProductList([...products]);
-    const unsubscribe = subscribeCategories((next) => setCategoryList([...next]));
-    return () => unsubscribe();
+    (async () => {
+      try {
+        const [catsRes, prodsRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ]);
+        if (catsRes.ok) setCategoryList(await catsRes.json());
+        if (prodsRes.ok) {
+          const rows = await prodsRes.json();
+          const mapped: Product[] = (rows || []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            price: Number(r.price),
+            image: r.image || '',
+            hint: r.hint || '',
+            description: r.description || '',
+            categoryId: r.category_id,
+            subCategory: r.sub_category || undefined,
+            subHeading: r.sub_heading || undefined,
+          }));
+          setProductList(mapped);
+        }
+      } catch {}
+    })();
   }, []);
 
   const filteredProducts = productList.filter(product => {
-    const category = getCategoryById(product.categoryId);
+    const category = categoryList.find(c => c.id === product.categoryId);
     return product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (category && category.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -92,9 +110,32 @@ export default function AdminProductManager() {
       subHeading: formData.subHeading || undefined
     };
 
-    const next = [...productList, newProduct];
-    setProductList(next);
-    setProducts(next);
+    (async () => {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        const createdMapped: Product = {
+          id: created.id,
+          name: created.name,
+          price: Number(created.price),
+          image: created.image || '',
+          hint: created.hint || '',
+          description: created.description || '',
+          categoryId: created.category_id,
+          subCategory: created.sub_category || undefined,
+          subHeading: created.sub_heading || undefined,
+        };
+        setProductList([...productList, createdMapped]);
+        // Notify other admin panels (e.g., categories) to refresh counts
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('lumera:products-updated'));
+        }
+      }
+    })();
     resetForm();
     setIsAddDialogOpen(false);
     
@@ -128,9 +169,19 @@ export default function AdminProductManager() {
       subHeading: formData.subHeading || undefined
     };
 
-    const next = productList.map(p => p.id === editingProduct.id ? updatedProduct : p);
-    setProductList(next);
-    setProducts(next);
+    (async () => {
+      const res = await fetch('/api/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProduct),
+      });
+      if (res.ok) {
+        setProductList(productList.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('lumera:products-updated'));
+        }
+      }
+    })();
     resetForm();
     setIsEditDialogOpen(false);
     setEditingProduct(null);
@@ -144,9 +195,17 @@ export default function AdminProductManager() {
   const handleDeleteProduct = () => {
     if (!deletingProduct) return;
     
-    const next = productList.filter(p => p.id !== deletingProduct.id);
-    setProductList(next);
-    setProducts(next);
+    (async () => {
+      const url = new URL('/api/products', window.location.origin);
+      url.searchParams.set('id', String(deletingProduct.id));
+      const res = await fetch(url.toString(), { method: 'DELETE' });
+      if (res.ok) {
+        setProductList(productList.filter(p => p.id !== deletingProduct.id));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('lumera:products-updated'));
+        }
+      }
+    })();
     setIsDeleteDialogOpen(false);
     setDeletingProduct(null);
     
@@ -262,7 +321,7 @@ export default function AdminProductManager() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{getCategoryById(product.categoryId)?.name || 'Unknown'}</Badge>
+                    <Badge variant="outline">{categoryList.find(c => c.id === product.categoryId)?.name || 'Unknown'}</Badge>
                   </TableCell>
                   <TableCell>${product.price.toLocaleString()}</TableCell>
                   <TableCell>₹{(product.price * USD_TO_INR_RATE).toLocaleString('en-IN')}</TableCell>

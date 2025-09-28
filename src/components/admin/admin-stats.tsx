@@ -2,12 +2,28 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Users, DollarSign } from 'lucide-react';
-import { products, categories } from '@/lib/products';
+import { useEffect, useState } from 'react';
 
 export default function AdminStats() {
-  const totalProducts = products.length;
-  const totalCategories = categories.length;
-  const totalValue = products.reduce((sum, p) => sum + p.price, 0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalCategories, setTotalCategories] = useState(0);
+  const [totalValue, setTotalValue] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [catRes, prodRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ]);
+        const cats = catRes.ok ? await catRes.json() : [];
+        const prods = prodRes.ok ? await prodRes.json() : [];
+        setTotalCategories(cats.length);
+        setTotalProducts(prods.length);
+        setTotalValue(prods.reduce((sum: number, p: any) => sum + Number(p.price || 0), 0));
+      } catch {}
+    })();
+  }, []);
   // Ratings removed
 
   return (

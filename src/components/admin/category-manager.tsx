@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Search, Image as ImageIcon } from 'lucide-react';
 import { categories, Category, updateCategoryProductCounts, setCategories, subscribeCategories, loadCategoriesFromStorage, CategoryType } from '@/lib/products';
+// TODO: Replace local state updates with API-backed calls to /api/categories
 import { useToast } from '@/hooks/use-toast';
 
 export default function CategoryManager({ type }: { type: CategoryType }) {
@@ -36,11 +37,60 @@ export default function CategoryManager({ type }: { type: CategoryType }) {
     category.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Load from localStorage on mount
+  // Load from API on mount (fallback to local)
   useEffect(() => {
-    loadCategoriesFromStorage();
-    const unsubscribe = subscribeCategories((next) => setCategoryList(next.filter(c => c.type === type)));
-    return () => unsubscribe();
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        if (res.ok) {
+          const rows = await res.json();
+          const mapped: Category[] = (rows || []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            slug: r.slug,
+            description: r.description || '',
+            image: r.image || '',
+            productCount: r.product_count ?? 0,
+            type: r.type,
+          }));
+          setCategoryList(mapped.filter((c: Category) => c.type === type));
+          return;
+        }
+      } catch {}
+      loadCategoriesFromStorage();
+      const unsubscribe = subscribeCategories((next) => setCategoryList(next.filter(c => c.type === type)));
+      return () => unsubscribe();
+    })();
+  }, [type]);
+
+  // Refresh categories when products change (to refresh counts)
+  useEffect(() => {
+    const handler = async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        if (res.ok) {
+          const rows = await res.json();
+          const mapped: Category[] = (rows || []).map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            slug: r.slug,
+            description: r.description || '',
+            image: r.image || '',
+            productCount: r.product_count ?? 0,
+            type: r.type,
+          }));
+          setCategoryList(mapped.filter((c: Category) => c.type === type));
+        }
+      } catch {}
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('lumera:products-updated', handler);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('lumera:products-updated', handler);
+      }
+    };
   }, [type]);
 
   const resetForm = () => {
@@ -92,9 +142,26 @@ export default function CategoryManager({ type }: { type: CategoryType }) {
       type
     };
 
-    const nextAll = [...categories, newCategory];
-    setCategoryList(nextAll.filter(c => c.type === type));
-    setCategories(nextAll);
+    (async () => {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCategory),
+      });
+      if (res.ok) {
+        const created = await res.json();
+        const createdMapped: Category = {
+          id: created.id,
+          name: created.name,
+          slug: created.slug,
+          description: created.description || '',
+          image: created.image || '',
+          productCount: created.product_count ?? 0,
+          type: created.type,
+        };
+        setCategoryList([...categoryList, createdMapped].filter(c => c.type === type));
+      }
+    })();
     resetForm();
     setIsAddDialogOpen(false);
     
@@ -134,9 +201,16 @@ export default function CategoryManager({ type }: { type: CategoryType }) {
       image: formData.image
     };
 
-    const nextAll = categories.map(c => c.id === editingCategory.id ? { ...updatedCategory, type } : c);
-    setCategoryList(nextAll.filter(c => c.type === type));
-    setCategories(nextAll);
+    (async () => {
+      const res = await fetch('/api/categories', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedCategory),
+      });
+      if (res.ok) {
+        setCategoryList(categoryList.map(c => c.id === updatedCategory.id ? { ...updatedCategory, type } : c));
+      }
+    })();
     resetForm();
     setIsEditDialogOpen(false);
     setEditingCategory(null);
@@ -150,9 +224,14 @@ export default function CategoryManager({ type }: { type: CategoryType }) {
   const handleDeleteCategory = () => {
     if (!deletingCategory) return;
     
-    const nextAll = categories.filter(c => c.id !== deletingCategory.id);
-    setCategoryList(nextAll.filter(c => c.type === type));
-    setCategories(nextAll);
+    (async () => {
+      const url = new URL('/api/categories', window.location.origin);
+      url.searchParams.set('id', String(deletingCategory.id));
+      const res = await fetch(url.toString(), { method: 'DELETE' });
+      if (res.ok) {
+        setCategoryList(categoryList.filter(c => c.id !== deletingCategory.id));
+      }
+    })();
     setIsDeleteDialogOpen(false);
     setDeletingCategory(null);
     
@@ -326,10 +405,10 @@ export default function CategoryManager({ type }: { type: CategoryType }) {
             <DialogDescription>
               Are you sure you want to delete "{deletingCategory?.name}"? This action cannot be undone.
               {deletingCategory?.productCount && deletingCategory.productCount > 0 && (
-                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
+                <span className="mt-2 block p-2 bg-yellow-50 border border-yellow-200 rounded text-yellow-800">
                   <strong>Warning:</strong> This category has {deletingCategory.productCount} products. 
                   Deleting it will remove the category association from these products.
-                </div>
+                </span>
               )}
             </DialogDescription>
           </DialogHeader>

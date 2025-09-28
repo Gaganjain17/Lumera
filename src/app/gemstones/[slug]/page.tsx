@@ -11,12 +11,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product-card';
 import BackButton from '@/components/back-button';
-import { 
-  getCategoryBySlugWithinType, 
-  getProductsByTypeAndCategorySlug, 
-  loadProductsFromStorage,
-  loadCategoriesFromStorage
-} from '@/lib/products';
+import {} from '@/lib/products';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -27,15 +22,42 @@ interface CategoryPageProps {
 export default function GemstonesCategoryPage({ params }: CategoryPageProps) {
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState('all');
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
+  const [dynamicProducts, setDynamicProducts] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const resolvedParams = use(params);
 
   useEffect(() => {
-    loadProductsFromStorage();
-    loadCategoriesFromStorage();
-  }, []);
+    (async () => {
+      try {
+        const [catRes, prodRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ]);
+        const cats = catRes.ok ? await catRes.json() : [];
+        const products = prodRes.ok ? await prodRes.json() : [];
+        const category = cats.find((c: any) => c.type === 'gemstone' && c.slug === resolvedParams.slug);
+        setDynamicCategories(cats);
+        setDynamicProducts(category ? products.filter((p: any) => p.category_id === category.id) : []);
+      } catch {}
+      setLoaded(true);
+    })();
+  }, [resolvedParams.slug]);
 
-  const category = getCategoryBySlugWithinType('gemstone', resolvedParams.slug);
-  const products = getProductsByTypeAndCategorySlug('gemstone', resolvedParams.slug);
+  const category = dynamicCategories.find((c: any) => c.type === 'gemstone' && c.slug === resolvedParams.slug);
+  const products = dynamicProducts;
+
+  if (!loaded) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">Loading…</div>
+    );
+  }
+
+  if (loaded && !category) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">Category not found</div>
+    );
+  }
 
   if (!category) {
     notFound();

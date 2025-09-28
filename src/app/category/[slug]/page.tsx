@@ -12,14 +12,8 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product-card';
 import BackButton from '@/components/back-button';
-import { 
-  getCategoryBySlug, 
-  getProductsByCategorySlug, 
-  categories,
-  USD_TO_INR_RATE,
-  loadProductsFromStorage,
-  loadCategoriesFromStorage
-} from '@/lib/products';
+import { USD_TO_INR_RATE } from '@/lib/products';
+import { addCacheBusting } from '@/lib/image-utils';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -30,19 +24,44 @@ interface CategoryPageProps {
 export default function CategoryPage({ params }: CategoryPageProps) {
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState('all');
-  const [dynamicCategories, setDynamicCategories] = useState(categories);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
+  const [dynamicProducts, setDynamicProducts] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   const resolvedParams = use(params);
   
-  // Load data from storage on mount
+  // Load from API
   useEffect(() => {
-    loadProductsFromStorage();
-    loadCategoriesFromStorage();
-    setDynamicCategories([...categories]);
-  }, []);
+    (async () => {
+      const slug = resolvedParams.slug;
+      try {
+        const [catRes, prodRes, allCatRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+          fetch('/api/categories', { cache: 'no-store' }),
+        ]);
+        const allCats = catRes.ok ? await catRes.json() : [];
+        const products = prodRes.ok ? await prodRes.json() : [];
+        const category = allCats.find((c: any) => c.slug === slug);
+        setDynamicCategories(allCatRes.ok ? await allCatRes.json() : []);
+        setDynamicProducts(category ? products.filter((p: any) => p.category_id === category.id) : []);
+      } catch {}
+      setLoaded(true);
+    })();
+  }, [resolvedParams.slug]);
 
-  const category = getCategoryBySlug(resolvedParams.slug);
-  const products = getProductsByCategorySlug(resolvedParams.slug);
+  const category = dynamicCategories.find((c: any) => c.slug === resolvedParams.slug);
+  const products = dynamicProducts;
+
+  if (!loaded) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">Loading…</div>
+    );
+  }
+
+  if (loaded && !category) {
+    notFound();
+  }
 
   if (!category) {
     notFound();

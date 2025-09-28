@@ -3,24 +3,69 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { BankDetails, getBankDetails, setBankDetails } from '@/lib/bank';
+import type { BankDetails } from '@/lib/bank';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function BankDetailsManager() {
   const { toast } = useToast();
-  const [details, setDetails] = useState<BankDetails>(getBankDetails());
+  const [details, setDetails] = useState<BankDetails>({
+    accountHolder: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    accountType: '',
+    upiId: '',
+    qrImageUrl: '',
+    gstDetails: '',
+  });
   const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
-    setDetails(getBankDetails());
+    (async () => {
+      const res = await fetch('/api/bank-details', { cache: 'no-store' });
+      if (!res.ok) return;
+      const row = await res.json();
+      if (row) {
+        // API GET returns camelCase
+        setDetails({
+          accountHolder: row.accountHolder || '',
+          bankName: row.bankName || '',
+          accountNumber: row.accountNumber || '',
+          ifscCode: row.ifscCode || '',
+          accountType: row.accountType || '',
+          upiId: row.upiId || '',
+          qrImageUrl: row.qrImageUrl || '',
+          gstDetails: (row.gstDetails ?? row.gstNumber) || '',
+        });
+      }
+    })();
   }, []);
 
   const handleSave = () => {
-    setBankDetails(details);
-    toast({ title: 'Saved', description: 'Bank details updated successfully.' });
+    (async () => {
+      const res = await fetch('/api/bank-details', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(details),
+      });
+      if (res.ok) {
+        toast({ title: 'Saved', description: 'Bank details updated successfully.' });
+      } else {
+        let description = 'Failed to save bank details.';
+        try {
+          const data = await res.json();
+          if (data?.error) description += ` ${data.error}`;
+        } catch {
+          const text = await res.text();
+          if (text) description += ` ${text}`;
+        }
+        toast({ title: 'Error', description, variant: 'destructive' });
+      }
+    })();
   };
 
   return (
@@ -54,6 +99,10 @@ export default function BankDetailsManager() {
           <div className="space-y-2">
             <Label>UPI ID</Label>
             <Input value={details.upiId} onChange={(e) => setDetails({ ...details, upiId: e.target.value })} />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>GST Details</Label>
+            <Textarea rows={4} value={details.gstDetails} onChange={(e) => setDetails({ ...details, gstDetails: e.target.value })} placeholder="Enter GST details (legal name, GSTIN, addresses, notes)" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>QR Code Image URL</Label>

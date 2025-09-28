@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect, use } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { addInquiry } from '@/lib/inquiries';
+import { } from '@/lib/inquiries';
 import { Dialog as UIDialog, DialogContent as UIDialogContent, DialogHeader as UIDialogHeader, DialogTitle as UIDialogTitle, DialogFooter as UIDialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,44 +20,37 @@ import { useCart } from '@/context/cart-context';
 import { useWishlist } from '@/context/wishlist-context';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { products, customizationCosts, USD_TO_INR_RATE, getCategoryById, categories, loadCategoriesFromStorage } from '@/lib/products';
+import { customizationCosts, USD_TO_INR_RATE } from '@/lib/products';
 import { addCacheBusting } from '@/lib/image-utils';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { getBankDetails } from '@/lib/bank';
+import {} from '@/lib/bank';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-function getProduct(id: string) {
-  return products.find(p => p.id === parseInt(id));
+async function fetchProductById(id: number) {
+  const res = await fetch(`/api/products`, { cache: 'no-store' });
+  if (!res.ok) return null;
+  const all = await res.json();
+  return all.find((p: any) => p.id === id) || null;
 }
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const product = getProduct(resolvedParams.id);
+  const [product, setProduct] = useState<any | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const { addToCart } = useCart();
   const [expertOpen, setExpertOpen] = useState(false);
   const [expertForm, setExpertForm] = useState({ name: '', email: '', mobile: '', message: '' });
-  const handleSubmitInquiry = () => {
-    if (!expertForm.name || !expertForm.mobile || !expertForm.message) return;
-    addInquiry({
-      name: expertForm.name,
-      email: expertForm.email || undefined,
-      mobile: expertForm.mobile,
-      message: expertForm.message,
-      productId: product.id,
-      productName: product.name,
-    });
-    setExpertOpen(false);
-    setExpertForm({ name: '', email: '', mobile: '', message: '' });
-    toast({ title: 'Query Sent', description: 'Our expert will contact you shortly.' });
-  };
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { toast } = useToast();
   const isWishlisted = isInWishlist(product?.id || 0);
+  const [bank, setBank] = useState<any | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
   
   // State for customizations
-  const [selectedSize, setSelectedSize] = useState('15'); // Default size 15 (mid-range)
+  const [selectedSize, setSelectedSize] = useState('15');
   const [purchaseType, setPurchaseType] = useState('loose');
   const [jewelryType, setJewelryType] = useState('');
   const [metalType, setMetalType] = useState('');
@@ -65,17 +58,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const finalPriceUSD = useMemo(() => {
     if (!product) return 0;
     let price = product.price;
-    
-    // Ring size cost
-    const category = getCategoryById(product.categoryId);
-    if (category?.name === 'Rings' || (purchaseType === 'mounted' && (jewelryType === 'Ring' || jewelryType === 'Engagement Ring'))) {
+    if (product.categoryName === 'Rings' || (purchaseType === 'mounted' && (jewelryType === 'Ring' || jewelryType === 'Engagement Ring'))) {
         const baseSize = 5;
         const sizeIncrement = parseInt(selectedSize) - baseSize;
         if (sizeIncrement > 0) {
-            price *= Math.pow(1.02, sizeIncrement); // 2% increase per size
+            price *= Math.pow(1.02, sizeIncrement);
         }
     }
-    
     if (purchaseType === 'mounted') {
       if (jewelryType && customizationCosts.jewelryType[jewelryType as keyof typeof customizationCosts.jewelryType]) {
         price += customizationCosts.jewelryType[jewelryType as keyof typeof customizationCosts.jewelryType];
@@ -87,12 +76,54 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return price;
   }, [product, purchaseType, jewelryType, metalType, selectedSize]);
 
-  const finalPriceINR = useMemo(() => {
-    return finalPriceUSD * USD_TO_INR_RATE;
-  }, [finalPriceUSD]);
+  const finalPriceINR = useMemo(() => finalPriceUSD * USD_TO_INR_RATE, [finalPriceUSD]);
 
+  useEffect(() => {
+    (async () => {
+      const id = parseInt(resolvedParams.id);
+      console.log('[ProductDetailPage] Fetching data for product id:', id);
+      try {
+        const [catRes, prodRes, bankRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+          fetch('/api/bank-details', { cache: 'no-store' }),
+        ]);
+        console.log('[ProductDetailPage] /api/categories status:', catRes.status, 'ok:', catRes.ok);
+        console.log('[ProductDetailPage] /api/products status:', prodRes.status, 'ok:', prodRes.ok);
+        console.log('[ProductDetailPage] /api/bank-details status:', bankRes.status, 'ok:', bankRes.ok);
+        const cats = catRes.ok ? await catRes.json() : [];
+        const all = prodRes.ok ? await prodRes.json() : [];
+        const p = all.find((it: any) => it.id === id) || null;
+        setProduct(p ? {
+          ...p,
+          categoryName: (cats.find((c: any) => c.id === p.category_id)?.name) || '',
+          categoryId: p.category_id,
+        } : null);
+        setDynamicCategories(cats);
+        try {
+          const bankJson = bankRes.ok ? await bankRes.json() : null;
+          setBank(bankJson);
+        } catch (e) {
+          console.warn('[ProductDetailPage] Failed to parse bank details JSON:', e);
+          setBank(null);
+        }
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, [resolvedParams.id]);
 
-  if (!product) {
+  if (!loaded) {
+    return (
+      <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">Loading…</main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (loaded && !product) {
     return (
       <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
         <Header />
@@ -109,10 +140,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const handleAddToCart = () => {
     let customizationDetails = '';
-    const category = getCategoryById(product.categoryId);
-    if (category?.name === 'Rings') {
+    if (product.categoryName === 'Rings') {
        customizationDetails = `Size: ${selectedSize}`;
-    } else if (category?.name === 'Gemstones') {
+    } else if (product.categoryName === 'Gemstones') {
       if (purchaseType === 'loose') {
         customizationDetails = 'Loose Stone';
       } else {
@@ -127,25 +157,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       ...product,
       price: finalPriceUSD,
       customization: customizationDetails,
-      // Create a unique id for cart items based on customizations
       cartId: `${product.id}-${selectedSize}-${purchaseType}-${jewelryType}-${metalType}`
     };
     addToCart(itemToAdd);
-    toast({
-      title: 'Added to Cart',
-      description: `${product.name} has been added to your shopping cart.`,
-    });
+    toast({ title: 'Added to Cart', description: `${product.name} has been added to your shopping cart.` });
   };
   
   const basePriceINR = product.price * USD_TO_INR_RATE;
-  const bank = getBankDetails();
-  const [qrOpen, setQrOpen] = useState(false);
-  const [dynamicCategories, setDynamicCategories] = useState(categories);
-
-  useEffect(() => {
-    loadCategoriesFromStorage();
-    setDynamicCategories([...categories]);
-  }, []);
 
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
@@ -169,7 +187,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             
             <div className="space-y-6">
               <div>
-                <span className="text-sm font-medium text-primary">{getCategoryById(product.categoryId)?.name}</span>
+                <span className="text-sm font-medium text-primary">{product.categoryName}</span>
                 <h1 className="text-3xl md:text-4xl font-headline font-bold mt-1">{product.name}</h1>
               </div>
 
@@ -184,7 +202,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-lg text-foreground/80 leading-relaxed">{product.description}</p>
               
               {/* Customization Options */}
-              {getCategoryById(product.categoryId)?.name === 'Rings' && (
+              {product.categoryName === 'Rings' && (
                 <div className="space-y-4 pt-4">
                    <Label className='text-base'>Ring Size</Label>
                    <Select value={selectedSize} onValueChange={setSelectedSize}>
@@ -200,7 +218,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               )}
 
-              {getCategoryById(product.categoryId)?.name === 'Gemstones' && (
+              {product.categoryName === 'Gemstones' && (
                 <div className="space-y-6 pt-4">
                   <Separator />
                   <h3 className="text-xl font-headline font-semibold">Customize Your Gemstone</h3>
@@ -332,8 +350,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     <div className="space-y-3">
                       <a href={`https://wa.me/919987312555?text=${encodeURIComponent('Hello, I have a query about: ' + product.name)}`} target="_blank" className="block text-center text-primary hover:underline text-sm">Chat on WhatsApp</a>
                       <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => setExpertOpen(false)} className="flex-1">Cancel</Button>
-                        <Button onClick={handleSubmitInquiry} className="flex-1">Send</Button>
+                    <Button variant="outline" onClick={() => setExpertOpen(false)} className="flex-1">Cancel</Button>
+                    <Button onClick={async () => {
+                      if (!expertForm.name || !expertForm.mobile || !expertForm.message) return;
+                      await fetch('/api/inquiries', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          name: expertForm.name,
+                          email: expertForm.email || undefined,
+                          mobile: expertForm.mobile,
+                          message: expertForm.message,
+                          productId: product.id,
+                          productName: product.name,
+                        }),
+                      });
+                      setExpertOpen(false);
+                      setExpertForm({ name: '', email: '', mobile: '', message: '' });
+                      toast({ title: 'Query Sent', description: 'Our expert will contact you shortly.' });
+                    }} className="flex-1">Send</Button>
                       </div>
                     </div>
                   </div>
@@ -341,13 +376,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               </UIDialog>
 
               {/* Bank Details */}
-              <div className="pt-6">
-                <Accordion type="single" collapsible>
-                  <AccordionItem value="bank-details">
-                    <AccordionTrigger>Bank Details</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <Card className="bg-background">
+              {bank && (
+                <div className="pt-6">
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="bank-details">
+                      <AccordionTrigger>Bank Details</AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <Card className="bg-background">
                           <CardContent className="p-4 space-y-2 text-sm">
                             <div><span className="font-medium text-foreground">Account Holder:</span> {bank.accountHolder}</div>
                             <div><span className="font-medium text-foreground">Bank Name:</span> {bank.bankName}</div>
@@ -355,24 +391,35 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             <div><span className="font-medium text-foreground">IFSC Code:</span> {bank.ifscCode}</div>
                             <div><span className="font-medium text-foreground">Account Type:</span> {bank.accountType}</div>
                             <div><span className="font-medium text-foreground">UPI ID:</span> {bank.upiId}</div>
+                            {bank.gstDetails && (
+                              <div>
+                                <div className="font-medium text-foreground">GST Details:</div>
+                                <div className="whitespace-pre-wrap text-foreground/90">{bank.gstDetails}</div>
+                              </div>
+                            )}
                           </CardContent>
-                        </Card>
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <button onClick={() => setQrOpen(true)} className="focus:outline-none">
-                            <img src={bank.qrImageUrl} alt="Bank QR" className="w-56 h-56 object-contain rounded border" />
-                          </button>
-                          <div className="text-xs text-muted-foreground">Scan to Pay with any UPI App</div>
+                          </Card>
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            {bank.qrImageUrl && (
+                              <button onClick={() => setQrOpen(true)} className="focus:outline-none">
+                                <img src={bank.qrImageUrl} alt="Bank QR" className="w-56 h-56 object-contain rounded border" />
+                              </button>
+                            )}
+                            <div className="text-xs text-muted-foreground">Scan to Pay with any UPI App</div>
+                          </div>
                         </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-                <Dialog open={qrOpen} onOpenChange={setQrOpen}>
-                  <DialogContent className="max-w-md">
-                    <img src={bank.qrImageUrl} alt="Bank QR Large" className="w-full h-auto" />
-                  </DialogContent>
-                </Dialog>
-              </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                  <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+                    <DialogContent className="max-w-md">
+                      {bank?.qrImageUrl && (
+                        <img src={bank.qrImageUrl} alt="Bank QR Large" className="w-full h-auto" />
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              )}
             </div>
           </div>
         </div>

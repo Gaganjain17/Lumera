@@ -12,8 +12,6 @@ import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product-card';
 import CategoryCard from '@/components/category-card';
 import AdminQuickAccess from '@/components/admin-quick-access';
-import { categories, products, USD_TO_INR_RATE, subscribeCategories, loadCategoriesFromStorage } from '@/lib/products';
-import { addInquiry } from '@/lib/inquiries';
 import { useToast } from '@/hooks/use-toast';
 
 function HeroSection() {
@@ -44,16 +42,15 @@ function HeroSection() {
 }
 
 function CategorySection() {
-  const [dynamicCategories, setDynamicCategories] = React.useState(categories);
+  const [dynamicCategories, setDynamicCategories] = React.useState<any[]>([]);
 
   React.useEffect(() => {
-    // Load categories immediately and update state
-    loadCategoriesFromStorage();
-    setDynamicCategories([...categories]);
-    
-    // Subscribe to future changes
-    const unsubscribe = subscribeCategories((next) => setDynamicCategories([...next]));
-    return () => unsubscribe();
+    (async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' });
+        if (res.ok) setDynamicCategories(await res.json());
+      } catch {}
+    })();
   }, []);
 
   return (
@@ -79,7 +76,7 @@ function AIRecommendationSection() {
   const [expertForm, setExpertForm] = useState({ name: '', email: '', mobile: '', message: '' });
   const { toast } = useToast();
 
-  const handleSubmitInquiry = () => {
+  const handleSubmitInquiry = async () => {
     if (!expertForm.name || !expertForm.mobile || !expertForm.message) {
       toast({
         title: 'Validation Error',
@@ -88,12 +85,15 @@ function AIRecommendationSection() {
       });
       return;
     }
-    
-    addInquiry({
-      name: expertForm.name,
-      email: expertForm.email || undefined,
-      mobile: expertForm.mobile,
-      message: expertForm.message,
+    await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: expertForm.name,
+        email: expertForm.email || undefined,
+        mobile: expertForm.mobile,
+        message: expertForm.message,
+      }),
     });
     
     setExpertOpen(false);

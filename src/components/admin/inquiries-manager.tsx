@@ -5,12 +5,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getAllInquiries, updateInquiryStatus, deleteInquiry, Inquiry } from '@/lib/inquiries';
+import type { Inquiry } from '@/lib/inquiries';
+
+async function fetchInquiries(): Promise<Inquiry[]> {
+  const res = await fetch('/api/inquiries', { cache: 'no-store' });
+  if (!res.ok) return [];
+  const rows = await res.json();
+  // map DB fields to client interface
+  return (rows || []).map((r: any) => ({
+    id: r.id,
+    createdAt: new Date(r.created_at).getTime(),
+    name: r.name,
+    email: r.email || undefined,
+    mobile: r.mobile,
+    message: r.message,
+    productId: r.product_id || undefined,
+    productName: r.product_name || undefined,
+    status: r.status,
+  }));
+}
+
+async function apiToggleStatus(id: string, nextStatus: 'new' | 'resolved'): Promise<void> {
+  await fetch('/api/inquiries', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, status: nextStatus }),
+  });
+}
+
+async function apiDeleteInquiry(id: string): Promise<void> {
+  const url = new URL('/api/inquiries', window.location.origin);
+  url.searchParams.set('id', id);
+  await fetch(url.toString(), { method: 'DELETE' });
+}
 
 export default function InquiriesManager() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
-  const refresh = () => setInquiries(getAllInquiries());
+  const refresh = async () => setInquiries(await fetchInquiries());
   useEffect(() => { refresh(); }, []);
 
   return (
@@ -51,8 +83,8 @@ export default function InquiriesManager() {
                   <Badge variant={i.status === 'new' ? 'default' : 'secondary'}>{i.status}</Badge>
                 </TableCell>
                 <TableCell className="space-x-2">
-                  <Button size="sm" variant="outline" onClick={() => { updateInquiryStatus(i.id, i.status === 'new' ? 'resolved' : 'new'); refresh(); }}>Toggle</Button>
-                  <Button size="sm" variant="destructive" onClick={() => { deleteInquiry(i.id); refresh(); }}>Delete</Button>
+                  <Button size="sm" variant="outline" onClick={async () => { await apiToggleStatus(i.id, i.status === 'new' ? 'resolved' : 'new'); await refresh(); }}>Toggle</Button>
+                  <Button size="sm" variant="destructive" onClick={async () => { await apiDeleteInquiry(i.id); await refresh(); }}>Delete</Button>
                 </TableCell>
               </TableRow>
             ))}

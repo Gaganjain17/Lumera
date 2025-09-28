@@ -6,6 +6,7 @@ export interface BankDetails {
   accountType: string;
   upiId: string;
   qrImageUrl: string;
+  gstDetails?: string;
 }
 
 const STORAGE_KEY = 'lumera_bank_details_v1';
@@ -18,6 +19,7 @@ export const defaultBankDetails: BankDetails = {
   accountType: 'Saving Account',
   upiId: 'harshitjain083@oksbi',
   qrImageUrl: '/assets/images/bank_qr.png',
+  gstDetails: '',
 };
 
 export function isBrowser(): boolean {

@@ -11,14 +11,7 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import ProductCard from '@/components/product-card';
 import BackButton from '@/components/back-button';
-import { 
-  getCategoryBySlugWithinType, 
-  getProductsByTypeAndCategorySlug, 
-  categories,
-  USD_TO_INR_RATE,
-  loadProductsFromStorage,
-  loadCategoriesFromStorage
-} from '@/lib/products';
+import { USD_TO_INR_RATE } from '@/lib/products';
 
 interface CategoryPageProps {
   params: Promise<{
@@ -29,17 +22,38 @@ interface CategoryPageProps {
 export default function JewelsCategoryPage({ params }: CategoryPageProps) {
   const [sortBy, setSortBy] = useState('featured');
   const [priceRange, setPriceRange] = useState('all');
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
+  const [dynamicProducts, setDynamicProducts] = useState<any[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const resolvedParams = use(params);
 
   useEffect(() => {
-    loadProductsFromStorage();
-    loadCategoriesFromStorage();
-  }, []);
+    (async () => {
+      try {
+        const [catRes, prodRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ]);
+        const cats = catRes.ok ? await catRes.json() : [];
+        const products = prodRes.ok ? await prodRes.json() : [];
+        const category = cats.find((c: any) => c.type === 'jewel' && c.slug === resolvedParams.slug);
+        setDynamicCategories(cats);
+        setDynamicProducts(category ? products.filter((p: any) => p.category_id === category.id) : []);
+      } catch {}
+      setLoaded(true);
+    })();
+  }, [resolvedParams.slug]);
 
-  const category = getCategoryBySlugWithinType('jewel', resolvedParams.slug);
-  const products = getProductsByTypeAndCategorySlug('jewel', resolvedParams.slug);
+  const category = dynamicCategories.find((c: any) => c.type === 'jewel' && c.slug === resolvedParams.slug);
+  const products = dynamicProducts;
 
-  if (!category) {
+  if (!loaded) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">Loading…</div>
+    );
+  }
+
+  if (loaded && !category) {
     notFound();
   }
 

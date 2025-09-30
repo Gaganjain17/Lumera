@@ -49,7 +49,12 @@ export default function JewelsCategoryPage({ params }: CategoryPageProps) {
 
   if (!loaded) {
     return (
-      <div className="flex min-h-dvh items-center justify-center">Loading…</div>
+      <div className="flex min-h-dvh items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="font-headline text-3xl font-bold text-primary tracking-wider">Luméra</span>
+          <span className="text-muted-foreground">Loading…</span>
+        </div>
+      </div>
     );
   }
 

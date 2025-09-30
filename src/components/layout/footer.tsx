@@ -74,7 +74,7 @@ export default function Footer() {
         </div>
         
         <div className="mt-12 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
-          <p>&amp;copy; {new Date().getFullYear()} LUMERA Fine Gems &amp; Jewels. All rights reserved.</p>
+          <p>&amp;copy; {new Date().getFullYear()} Luméra — FINE GEMS &amp; JEWELS. All rights reserved.</p>
         </div>
       </div>
     </footer>

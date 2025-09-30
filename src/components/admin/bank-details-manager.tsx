@@ -53,6 +53,23 @@ export default function BankDetailsManager() {
         body: JSON.stringify(details),
       });
       if (res.ok) {
+        // Re-fetch to ensure we reflect what's in the database after restart
+        const check = await fetch('/api/bank-details', { cache: 'no-store' });
+        if (check.ok) {
+          const row = await check.json();
+          if (row) {
+            setDetails({
+              accountHolder: row.accountHolder || '',
+              bankName: row.bankName || '',
+              accountNumber: row.accountNumber || '',
+              ifscCode: row.ifscCode || '',
+              accountType: row.accountType || '',
+              upiId: row.upiId || '',
+              qrImageUrl: row.qrImageUrl || '',
+              gstDetails: (row.gstDetails ?? row.gstNumber) || '',
+            });
+          }
+        }
         toast({ title: 'Saved', description: 'Bank details updated successfully.' });
       } else {
         let description = 'Failed to save bank details.';

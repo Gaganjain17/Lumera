@@ -43,6 +43,16 @@ create table if not exists public.products (
   sub_heading text
 );
 
+-- Media support: store multiple images/videos per product
+alter table public.products
+  add column if not exists media jsonb not null default '[]'::jsonb;
+
+-- Backfill existing image column into media as first image item
+update public.products
+set media = jsonb_build_array(jsonb_build_object('type','image','url', image))
+where (media is null or jsonb_typeof(media) <> 'array' or jsonb_array_length(media) = 0)
+  and image is not null;
+
 -- Inquiries
 create table if not exists public.inquiries (
   id uuid primary key default gen_random_uuid(),

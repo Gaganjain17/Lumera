@@ -31,6 +31,7 @@ export default function AdminProductManager() {
     price: '',
     priceInr: '',
     image: '',
+    media: [] as Array<{ type: 'image' | 'video'; url: string }>,
     hint: '',
     description: '',
     categoryId: '',
@@ -54,6 +55,7 @@ export default function AdminProductManager() {
             name: r.name,
             price: Number(r.price),
             image: r.image || '',
+            media: Array.isArray(r.media) ? r.media : (r.image ? [{ type: 'image', url: r.image }] : []),
             hint: r.hint || '',
             description: r.description || '',
             categoryId: r.category_id,
@@ -79,6 +81,7 @@ export default function AdminProductManager() {
       price: '',
       priceInr: '',
       image: '',
+      media: [],
       hint: '',
       description: '',
       categoryId: '',
@@ -87,10 +90,11 @@ export default function AdminProductManager() {
   };
 
   const handleAddProduct = () => {
-    if (!formData.name || !formData.priceInr || !formData.image || !formData.description || !formData.categoryId) {
+    const hasAnyMedia = (Array.isArray(formData.media) && formData.media.length > 0) || !!formData.image;
+    if (!formData.name || !formData.priceInr || !hasAnyMedia || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all required fields (name, price, description, category, at least one image/video).',
         variant: 'destructive'
       });
       return;
@@ -99,11 +103,13 @@ export default function AdminProductManager() {
     // Use INR price and convert to USD for storage
     const priceInUSD = parseFloat(formData.priceInr) / USD_TO_INR_RATE;
 
+    const nextId = productList.length > 0 ? Math.max(...productList.map(p => p.id)) + 1 : 1;
     const newProduct: Product = {
-      id: Math.max(...productList.map(p => p.id)) + 1,
+      id: nextId,
       name: formData.name,
       price: priceInUSD,
       image: formData.image,
+      media: formData.media,
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
       description: formData.description,
       categoryId: parseInt(formData.categoryId),
@@ -123,6 +129,7 @@ export default function AdminProductManager() {
           name: created.name,
           price: Number(created.price),
           image: created.image || '',
+          media: Array.isArray(created.media) ? created.media : [],
           hint: created.hint || '',
           description: created.description || '',
           categoryId: created.category_id,
@@ -134,6 +141,10 @@ export default function AdminProductManager() {
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('lumera:products-updated'));
         }
+      } else {
+        let err = 'Failed to add product';
+        try { const j = await res.json(); err = j?.error || err; } catch {}
+        toast({ title: 'Add failed', description: err, variant: 'destructive' });
       }
     })();
     resetForm();
@@ -146,10 +157,11 @@ export default function AdminProductManager() {
   };
 
   const handleEditProduct = () => {
-    if (!editingProduct || !formData.name || !formData.priceInr || !formData.image || !formData.description || !formData.categoryId) {
+    const hasAnyMedia = (Array.isArray(formData.media) && formData.media.length > 0) || !!formData.image;
+    if (!editingProduct || !formData.name || !formData.priceInr || !hasAnyMedia || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields.',
+        description: 'Please fill in all required fields (name, price, description, category, at least one image/video).',
         variant: 'destructive'
       });
       return;
@@ -163,6 +175,7 @@ export default function AdminProductManager() {
       name: formData.name,
       price: priceInUSD,
       image: formData.image,
+      media: formData.media,
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
       description: formData.description,
       categoryId: parseInt(formData.categoryId),
@@ -180,6 +193,10 @@ export default function AdminProductManager() {
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('lumera:products-updated'));
         }
+      } else {
+        let err = 'Failed to update product';
+        try { const j = await res.json(); err = j?.error || err; } catch {}
+        toast({ title: 'Update failed', description: err, variant: 'destructive' });
       }
     })();
     resetForm();
@@ -222,6 +239,7 @@ export default function AdminProductManager() {
       price: '', // Let admin enter separate USD value
       priceInr: (product.price * USD_TO_INR_RATE).toFixed(2),
       image: product.image,
+      media: product.media || (product.image ? [{ type: 'image', url: product.image }] : []),
       hint: product.hint,
       description: product.description,
       categoryId: product.categoryId.toString(),
@@ -401,7 +419,7 @@ function ProductForm({
   categories: Category[];
 }) {
   return (
-    <div className="grid gap-4 py-4">
+    <div className="grid gap-4 py-4 max-h-[80vh] overflow-y-auto pr-1">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Product Name *</Label>
@@ -438,13 +456,50 @@ function ProductForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="image">Image URL *</Label>
+        <Label htmlFor="image">Image URL (optional if media added)</Label>
         <Input
           id="image"
           value={formData.image}
           onChange={(e) => setFormData({ ...formData, image: e.target.value })}
           placeholder="https://example.com/image.jpg"
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Media (Images/Videos)</Label>
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {formData.media?.map((m: any, idx: number) => (
+            <div key={idx} className="relative shrink-0">
+              {m.type === 'image' ? (
+                <img src={m.url} className="w-24 h-24 object-cover rounded" />
+              ) : (
+                <video className="w-24 h-24 object-cover rounded" src={m.url} />
+              )}
+              <button className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2" onClick={() => {
+                const next = [...formData.media];
+                next.splice(idx, 1);
+                setFormData({ ...formData, media: next });
+              }}>x</button>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <Input placeholder="Image URL" onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const val = (e.target as HTMLInputElement).value.trim();
+              if (val) setFormData({ ...formData, media: [...formData.media, { type: 'image', url: val }] });
+              (e.target as HTMLInputElement).value = '';
+            }
+          }} />
+          <Input placeholder="Video URL (mp4)" onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const val = (e.target as HTMLInputElement).value.trim();
+              if (val) setFormData({ ...formData, media: [...formData.media, { type: 'video', url: val }] });
+              (e.target as HTMLInputElement).value = '';
+            }
+          }} />
+        </div>
+        <p className="text-xs text-muted-foreground">Press Enter to add. Supports multiple entries.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

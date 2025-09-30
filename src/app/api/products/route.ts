@@ -10,7 +10,12 @@ export async function GET(request: NextRequest) {
   const builder = categoryId ? query.eq('category_id', Number(categoryId)) : query;
   const { data, error } = await builder.order('id');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data || []);
+  // Backward compatibility: ensure media array present
+  const withMedia = (data || []).map((r: any) => {
+    const media = Array.isArray(r.media) ? r.media : (r.image ? [{ type: 'image', url: r.image }] : []);
+    return { ...r, media };
+  });
+  return NextResponse.json(withMedia);
 }
 
 export async function POST(request: NextRequest) {
@@ -20,6 +25,7 @@ export async function POST(request: NextRequest) {
     name: body.name,
     price: body.price,
     image: body.image,
+    media: Array.isArray(body.media) ? body.media : (body.image ? [{ type: 'image', url: body.image }] : []),
     hint: body.hint,
     description: body.description,
     category_id: body.categoryId,
@@ -38,6 +44,7 @@ export async function PATCH(request: NextRequest) {
     name: body.name,
     price: body.price,
     image: body.image,
+    media: Array.isArray(body.media) ? body.media : undefined,
     hint: body.hint,
     description: body.description,
     category_id: body.categoryId,

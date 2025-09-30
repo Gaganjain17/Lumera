@@ -7,8 +7,8 @@ import { UserAuthProvider } from '@/context/user-auth-context';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LUMERA Showcase',
-  description: 'Exquisite Fine Gems & Jewels by LUMERA',
+  title: 'Luméra — FINE GEMS & JEWELS',
+  description: 'Exquisite Fine Gems & Jewels by Luméra',
 };
 
 export default function RootLayout({

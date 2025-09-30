@@ -117,7 +117,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return (
       <div className="flex flex-col min-h-dvh bg-background text-foreground font-body">
         <Header />
-        <main className="flex-1 flex items-center justify-center">Loading…</main>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <span className="font-headline text-3xl font-bold text-primary tracking-wider">Luméra</span>
+            <span className="text-muted-foreground">Loading…</span>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -172,17 +177,29 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         <div className="container">
           <BackButton className="mb-8" />
           <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
-            <div className="relative aspect-square rounded-xl overflow-hidden shadow-lg">
-              <Image 
-                src={addCacheBusting(product.image)}
-                alt={product.name}
-                data-ai-hint={product.hint}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                quality={90}
-              />
+            <div className="relative rounded-xl overflow-hidden shadow-lg">
+              <div className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2">
+                {(Array.isArray(product.media) && product.media.length > 0 ? product.media : [{ type: 'image', url: product.image }]).map((m: any, idx: number) => (
+                  <div key={idx} className="relative snap-start shrink-0 w-[80vw] max-w-[560px] aspect-square">
+                    {m.type === 'image' ? (
+                      <Image
+                        src={addCacheBusting(m.url)}
+                        alt={product.name}
+                        data-ai-hint={product.hint}
+                        fill
+                        className="object-cover rounded-lg"
+                        priority={idx === 0}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        quality={90}
+                      />
+                    ) : (
+                      <video controls className="w-full h-full rounded-lg object-cover">
+                        <source src={m.url} type="video/mp4" />
+                      </video>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             
             <div className="space-y-6">

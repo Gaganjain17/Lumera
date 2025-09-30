@@ -18,6 +18,7 @@ export interface Product {
   name: string;
   price: number; // in USD
   image: string;
+  media?: Array<{ type: 'image' | 'video'; url: string }>;
   hint: string;
   description: string;
   categoryId: number; // Reference to category

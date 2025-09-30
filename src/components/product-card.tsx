@@ -11,7 +11,8 @@ import { USD_TO_INR_RATE } from '@/lib/products';
 import { addCacheBusting } from '@/lib/image-utils';
 
 export default function ProductCard(product: Product) {
-  const { id, name, price, image, hint, categoryId, subHeading } = product;
+  const { id, name, price, image, media, hint, categoryId, subHeading } = product;
+  const coverUrl = (media && media.find(m => m.type === 'image')?.url) || image;
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const isWishlisted = isInWishlist(id);
 
@@ -21,7 +22,7 @@ export default function ProductCard(product: Product) {
         <CardContent className="p-0 flex flex-col h-full">
           <div className="relative aspect-square overflow-hidden rounded-lg">
             <Image
-              src={addCacheBusting(image)}
+              src={addCacheBusting(coverUrl)}
               alt={name}
               data-ai-hint={hint}
               fill

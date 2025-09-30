@@ -24,7 +24,9 @@ export default function ProtectedAdminRoute({ children }: ProtectedAdminRoutePro
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-gray-600">Loading admin panel...</p>
+          <p className="text-gray-600">
+            <span className="font-headline text-2xl font-bold text-primary tracking-wider">Luméra</span>
+          </p>
         </div>
       </div>
     );

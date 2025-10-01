@@ -415,7 +415,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                             <div><span className="font-medium text-foreground">UPI ID:</span> {bank.upiId}</div>
                             {bank.gstDetails && (
                               <div>
-                                <div className="font-medium text-foreground">GST Details:</div>
+                                <div className="font-medium text-foreground">Business Details:</div>
                                 <div className="whitespace-pre-wrap text-foreground/90">{bank.gstDetails}</div>
                               </div>
                             )}

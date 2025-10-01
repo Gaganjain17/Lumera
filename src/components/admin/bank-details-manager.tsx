@@ -118,8 +118,8 @@ export default function BankDetailsManager() {
             <Input value={details.upiId} onChange={(e) => setDetails({ ...details, upiId: e.target.value })} />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label>GST Details</Label>
-            <Textarea rows={4} value={details.gstDetails} onChange={(e) => setDetails({ ...details, gstDetails: e.target.value })} placeholder="Enter GST details (legal name, GSTIN, addresses, notes)" />
+            <Label>Business Details</Label>
+            <Textarea rows={4} value={details.gstDetails} onChange={(e) => setDetails({ ...details, gstDetails: e.target.value })} placeholder="Enter business details (legal name, GSTIN, addresses, notes)" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>QR Code Image URL</Label>

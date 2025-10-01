@@ -9,6 +9,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Luméra — FINE GEMS & JEWELS',
   description: 'Exquisite Fine Gems & Jewels by Luméra',
+  icons: {
+    icon: '/icon.jpg',
+    apple: '/icon.jpg',
+  },
 };
 
 export default function RootLayout({

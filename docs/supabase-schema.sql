@@ -53,17 +53,22 @@ set media = jsonb_build_array(jsonb_build_object('type','image','url', image))
 where (media is null or jsonb_typeof(media) <> 'array' or jsonb_array_length(media) = 0)
   and image is not null;
 
--- Inquiries
-create table if not exists public.inquiries (
+-- Orders
+create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
-  name text not null,
-  email text,
-  mobile text not null,
-  message text not null,
-  product_id bigint references public.products(id) on delete set null,
-  product_name text,
-  status text not null check (status in ('new','resolved')) default 'new'
+  user_id uuid references public.users(id) on delete set null,
+  customer_name text not null,
+  customer_email text,
+  customer_mobile text,
+  customer_address text,
+  city text,
+  zip_code text,
+  total_amount numeric(12,2) not null,
+  status text not null check (status in ('pending','paid','shipped','delivered','cancelled')) default 'pending',
+  payment_receipt_url text,
+  order_items jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
 );
 
 -- Bank details (single row)
@@ -88,11 +93,14 @@ alter table public.products enable row level security;
 alter table public.inquiries enable row level security;
 alter table public.users enable row level security;
 alter table public.bank_details enable row level security;
+alter table public.orders enable row level security;
 
 -- Public read policies for catalog
 create policy "Public read categories" on public.categories for select using (true);
 create policy "Public read products" on public.products for select using (true);
 create policy "Public insert inquiries" on public.inquiries for insert with check (true);
+create policy "Public insert orders" on public.orders for insert with check (true);
 create policy "Admin manage bank details" on public.bank_details for all using (auth.role() = 'authenticated');
+create policy "Admin manage orders" on public.orders for all using (auth.role() = 'authenticated');
 
 

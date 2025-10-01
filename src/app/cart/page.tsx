@@ -21,13 +21,15 @@ function CartItem({ item, onUpdateQuantity, onRemove }: {
 
   return (
     <div className="flex items-start gap-6">
-      <div className="relative h-32 w-32 rounded-lg overflow-hidden">
+      <Link href={`/products/${item.id}`} className="relative h-32 w-32 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
         <Image src={item.image} alt={item.name} fill className="object-cover" />
-      </div>
+      </Link>
       <div className="flex-1">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-lg">{item.name}</h3>
+            <Link href={`/products/${item.id}`} className="hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg cursor-pointer">{item.name}</h3>
+            </Link>
             {item.customization && (
               <p className="text-sm text-muted-foreground">{item.customization}</p>
             )}
@@ -116,7 +118,9 @@ export default function CartPage() {
                     <span>₹{total.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
-                <Button size="lg" className="w-full mt-8">Proceed to Checkout</Button>
+                <Button size="lg" className="w-full mt-8" asChild>
+                  <Link href="/checkout">Proceed to Checkout</Link>
+                </Button>
               </div>
             </div>
           ) : (

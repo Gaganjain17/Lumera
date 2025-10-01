@@ -13,6 +13,7 @@ import ProtectedAdminRoute from '@/components/admin/protected-admin-route';
 import ChangePassword from '@/components/admin/change-password';
 import AdminUserManagement from '@/components/admin/admin-user-management';
 import BankDetailsManager from '@/components/admin/bank-details-manager';
+import OrdersManager from '@/components/admin/orders-manager';
 import InquiriesManager from '@/components/admin/inquiries-manager';
 import UsersManager from '@/components/admin/users-manager';
 import { useAdminAuth } from '@/context/admin-auth-context';
@@ -139,15 +140,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="orders" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Management</CardTitle>
-                <CardDescription>View and manage customer orders</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-500">Order management functionality coming soon...</p>
-              </CardContent>
-            </Card>
+            <OrdersManager />
           </TabsContent>
 
           <TabsContent value="customers" className="mt-6">

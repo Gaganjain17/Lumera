@@ -143,6 +143,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
+  const handleBuyNow = () => {
+    // First add to cart
+    handleAddToCart();
+    // Then redirect to checkout
+    window.location.href = '/checkout';
+  };
+
   const handleAddToCart = () => {
     let customizationDetails = '';
     if (product.categoryName === 'Rings') {
@@ -324,9 +331,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Button size="lg" className="w-full" onClick={handleAddToCart}>Add to Cart</Button>
-                <Link href={`/checkout?buyNow=${product.id}`}>
-                  <Button size="lg" className="w-full">Buy Now</Button>
-                </Link>
+                <Button size="lg" className="w-full" onClick={handleBuyNow}>Buy Now</Button>
                 <Button size="lg" variant="outline" className="w-full" onClick={() => setExpertOpen(true)}>Talk with Expert</Button>
                 <Button 
                   variant="outline" 

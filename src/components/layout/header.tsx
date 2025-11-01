@@ -303,7 +303,7 @@ export default function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
-                  {user?.fullName || 'User'}
+                  {user?.full_name || 'User'}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -370,7 +370,7 @@ export default function Header() {
                     </button>
                   ) : (
                     <div className="space-y-2">
-                      <div className="text-lg font-medium">{user?.fullName || 'User'}</div>
+                      <div className="text-lg font-medium">{user?.full_name || 'User'}</div>
                       <button 
                         onClick={userLogout}
                         className="text-base text-muted-foreground hover:text-primary transition-colors"

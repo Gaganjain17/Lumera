@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Lock } from 'lucide-react';
 import { useAdminAuth } from '@/context/admin-auth-context';
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,14 +25,16 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const success = await login(username, password);
+      const success = await login(email, password);
+      
       if (success) {
         router.push('/admin');
       } else {
-        setError('Invalid username or password');
+        setError('Invalid credentials or insufficient permissions');
       }
     } catch (error) {
       setError('An error occurred during login');
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -45,52 +47,42 @@ export default function AdminLoginPage() {
           <div className="mx-auto w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4">
             <Lock className="w-8 h-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            Admin Login
-          </CardTitle>
-          <CardDescription className="text-gray-600">
-            Access your Lumera admin panel
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">Admin Login</CardTitle>
+          <CardDescription>Sign in to access the admin dashboard</CardDescription>
         </CardHeader>
-        
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@lumera.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+              />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="pl-10 pr-10"
                   required
                   disabled={isLoading}
+                  className="pr-10"
                 />
                 <Button
                   type="button"
@@ -108,21 +100,17 @@ export default function AdminLoginPage() {
                 </Button>
               </div>
             </div>
-            
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Default credentials: <br />
+              Test credentials:<br />
               <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                admin / admin123
+                admin@lumera.com
               </span>
             </p>
           </div>
@@ -131,26 +119,3 @@ export default function AdminLoginPage() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

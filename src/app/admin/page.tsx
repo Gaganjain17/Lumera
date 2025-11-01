@@ -38,7 +38,7 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="h-4 w-4" />
-                  <span>{user?.username}</span>
+                  <span>{user?.email || 'Admin'}</span>
                   <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                     {user?.role}
                   </span>

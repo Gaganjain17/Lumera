@@ -7,8 +7,9 @@ export function getSupabaseAdmin(): SupabaseClient {
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
   if (!url || !serviceKey) {
-    throw new Error('Supabase admin env vars missing: NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
+    throw new Error('Supabase admin env vars missing: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
   }
 
   adminClient = createClient(url, serviceKey, {
@@ -17,7 +18,6 @@ export function getSupabaseAdmin(): SupabaseClient {
       autoRefreshToken: false,
     },
   });
+
   return adminClient;
 }
-
-

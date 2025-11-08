@@ -330,11 +330,20 @@ export default function CategoryManager({ type }: { type: CategoryType }) {
                 <TableRow key={category.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={category.image} 
-                        alt={category.name}
-                        className="w-12 h-12 rounded object-cover"
-                      />
+                      {category.image ? (
+                        <img 
+                          src={category.image} 
+                          alt={category.name}
+                          className="w-12 h-12 rounded object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded object-cover bg-gray-200 flex items-center justify-center text-xs text-gray-400">
+                          No Image
+                        </div>
+                      )}
                       <div>
                         <div className="font-medium">{category.name}</div>
                       </div>
@@ -431,12 +440,62 @@ function CategoryForm({
   setFormData: (data: any) => void;
   generateSlug: (name: string) => string;
 }) {
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
   const handleNameChange = (name: string) => {
     setFormData({ 
       ...formData, 
       name,
       slug: formData.slug || generateSlug(name)
     });
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('folder', 'categories');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setFormData((prev: any) => ({ ...prev, image: data.url }));
+      
+      toast({
+        title: 'Success',
+        description: 'Image uploaded successfully!',
+      });
+    } catch (error) {
+      toast({
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Failed to upload file',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -472,6 +531,21 @@ function CategoryForm({
             onChange={(e) => setFormData({ ...formData, image: e.target.value })}
             placeholder="https://example.com/category-image.jpg"
           />
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file);
+              }}
+              disabled={uploading}
+            />
+            <Button type="button" variant="outline" size="sm" disabled={uploading} asChild>
+              <span>{uploading ? 'Uploading...' : 'Choose Image'}</span>
+            </Button>
+          </label>
           {formData.image && (
             <Button
               type="button"

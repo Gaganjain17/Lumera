@@ -26,7 +26,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import {} from '@/lib/bank';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 async function fetchProductById(id: number) {
   const res = await fetch(`/api/products`, { cache: 'no-store' });
@@ -435,6 +435,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   </Accordion>
                   <Dialog open={qrOpen} onOpenChange={setQrOpen}>
                     <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>QR Code</DialogTitle>
+                      </DialogHeader>
                       {bank?.qrImageUrl && (
                         <img src={bank.qrImageUrl} alt="Bank QR Large" className="w-full h-auto" />
                       )}

@@ -10,10 +10,15 @@ export async function GET(request: NextRequest) {
   const builder = categoryId ? query.eq('category_id', Number(categoryId)) : query;
   const { data, error } = await builder.order('id');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  // Backward compatibility: ensure media array present
+  // Backward compatibility: ensure media array present and map prices
   const withMedia = (data || []).map((r: any) => {
     const media = Array.isArray(r.media) ? r.media : (r.image ? [{ type: 'image', url: r.image }] : []);
-    return { ...r, media };
+    return { 
+      ...r, 
+      media,
+      price: r.price ? Number(r.price) : undefined,
+      priceInr: Number(r.price_inr)
+    };
   });
   return NextResponse.json(withMedia);
 }
@@ -23,7 +28,8 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from('products').insert({
     name: body.name,
-    price: body.price,
+    price: body.price ?? null,
+    price_inr: body.priceInr,
     image: body.image,
     media: Array.isArray(body.media) ? body.media : (body.image ? [{ type: 'image', url: body.image }] : []),
     hint: body.hint,
@@ -33,7 +39,8 @@ export async function POST(request: NextRequest) {
     sub_heading: body.subHeading ?? null,
   }).select('*').single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  const result = { ...data, price: data.price ? Number(data.price) : undefined, priceInr: Number(data.price_inr) };
+  return NextResponse.json(result, { status: 201 });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -42,7 +49,8 @@ export async function PATCH(request: NextRequest) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from('products').update({
     name: body.name,
-    price: body.price,
+    price: body.price ?? null,
+    price_inr: body.priceInr,
     image: body.image,
     media: Array.isArray(body.media) ? body.media : undefined,
     hint: body.hint,
@@ -52,7 +60,8 @@ export async function PATCH(request: NextRequest) {
     sub_heading: body.subHeading ?? null,
   }).eq('id', body.id).select('*').single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  const result = { ...data, price: data.price ? Number(data.price) : undefined, priceInr: Number(data.price_inr) };
+  return NextResponse.json(result);
 }
 
 export async function DELETE(request: NextRequest) {

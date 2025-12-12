@@ -1,25 +1,24 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { Search, Heart, ShoppingBag, Menu, ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import Link from 'next/link'
+import { Search, Heart, ShoppingBag, Menu, ChevronDown, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useAdminAuth } from '@/context/admin-auth-context';
-import { useUserAuth } from '@/context/user-auth-context';
-import { useCart } from '@/context/cart-context';
-import { useWishlist } from '@/context/wishlist-context';
-// Use API-backed data instead of in-memory lib/products
-import AuthModal from '@/components/auth/auth-modal';
-
+} from '@/components/ui/dropdown-menu'
+import { useAdminAuth } from '@/context/admin-auth-context'
+import { useUserAuth } from '@/context/user-auth-context'
+import { useCart } from '@/context/cart-context'
+import { useWishlist } from '@/context/wishlist-context'
+import AuthModal from '@/components/auth/auth-modal'
 
 function NavItem({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -30,18 +29,18 @@ function NavItem({ href, children }: { href: string; children: React.ReactNode }
 }
 
 function JewelsDropdown() {
-  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/categories', { cache: 'no-store' });
-        if (res.ok) setDynamicCategories(await res.json());
+        const res = await fetch('/api/categories', { cache: 'no-store' })
+        if (res.ok) setDynamicCategories(await res.json())
       } catch {}
-    })();
-  }, []);
+    })()
+  }, [])
 
-  const jewels = dynamicCategories.filter((c: any) => c.type === 'jewel');
+  const jewels = dynamicCategories.filter((c: any) => c.type === 'jewel')
 
   return (
     <DropdownMenu>
@@ -51,11 +50,11 @@ function JewelsDropdown() {
           <ChevronDown className="h-4 w-4 ml-1" />
         </Button>
       </DropdownMenuTrigger>
-          <DropdownMenuContent>
+      <DropdownMenuContent>
         {jewels.map((cat: any) => (
-           <DropdownMenuItem key={cat.slug} asChild>
-             <Link href={`/jewels/${cat.slug}`}>{cat.name}</Link>
-           </DropdownMenuItem>
+          <DropdownMenuItem key={cat.slug} asChild>
+            <Link href={`/jewels/${cat.slug}`}>{cat.name}</Link>
+          </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -63,18 +62,18 @@ function JewelsDropdown() {
 }
 
 function GemstonesDropdown() {
-  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/categories', { cache: 'no-store' });
-        if (res.ok) setDynamicCategories(await res.json());
+        const res = await fetch('/api/categories', { cache: 'no-store' })
+        if (res.ok) setDynamicCategories(await res.json())
       } catch {}
-    })();
-  }, []);
+    })()
+  }, [])
 
-  const gemstones = dynamicCategories.filter((c: any) => c.type === 'gemstone');
+  const gemstones = dynamicCategories.filter((c: any) => c.type === 'gemstone')
 
   return (
     <DropdownMenu>
@@ -86,54 +85,9 @@ function GemstonesDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {gemstones.map((cat: any) => (
-           <DropdownMenuItem key={cat.slug} asChild>
-             <Link href={`/gemstones/${cat.slug}`}>{cat.name}</Link>
-           </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-function CollectionsDropdown() {
-  const collections = [
-    { name: 'New Arrivals', slug: 'new-arrivals' },
-    { name: 'Wedding Collection', slug: 'wedding-collection' },
-    { name: 'Bridal Jewelry', slug: 'bridal-jewelry' },
-    { name: 'Party Wear', slug: 'party-wear' },
-    { name: 'Daily Wear', slug: 'daily-wear' },
-    { name: 'Traditional Sets', slug: 'traditional-sets' },
-    { name: 'Modern Designs', slug: 'modern-designs' },
-    { name: 'Antique Collection', slug: 'antique-collection' },
-    { name: 'Luxury Pieces', slug: 'luxury-pieces' },
-    { name: 'Festival Special', slug: 'festival-special' },
-    { name: 'Corporate Gifts', slug: 'corporate-gifts' },
-    { name: 'Temple Jewelry', slug: 'temple-jewelry' },
-    { name: 'Kundan Sets', slug: 'kundan-sets' },
-    { name: 'Polki Collection', slug: 'polki-collection' },
-    { name: 'Meenakari Work', slug: 'meenakari-work' },
-    { name: 'Jadau Jewelry', slug: 'jadau-jewelry' },
-    { name: 'South Indian Style', slug: 'south-indian-style' },
-    { name: 'North Indian Style', slug: 'north-indian-style' },
-    { name: 'Indo-Western', slug: 'indo-western' },
-    { name: 'Minimalist Collection', slug: 'minimalist-collection' },
-    { name: 'Teen Collection', slug: 'teen-collection' },
-    { name: 'Senior Collection', slug: 'senior-collection' },
-    { name: 'Unisex Jewelry', slug: 'unisex-jewelry' },
-  ]
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="hover:text-primary transition-colors p-0 h-auto hover:bg-transparent -mr-2">
-          Collections
-          <ChevronDown className="h-4 w-4 ml-1" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        {collections.map(collection => (
-           <DropdownMenuItem key={collection.slug} asChild>
-             <Link href={`/category/${collection.slug}`}>{collection.name}</Link>
-           </DropdownMenuItem>
+          <DropdownMenuItem key={cat.slug} asChild>
+            <Link href={`/gemstones/${cat.slug}`}>{cat.name}</Link>
+          </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -141,18 +95,22 @@ function CollectionsDropdown() {
 }
 
 export default function Header() {
-  const { isAuthenticated } = useAdminAuth();
-  const { isAuthenticated: isUserAuthenticated, user, logout: userLogout } = useUserAuth();
-  const { cartItems } = useCart();
-  const { wishlistItems } = useWishlist();
-  const [dynamicCategories, setDynamicCategories] = useState<any[]>([]);
-  const [dynamicProducts, setDynamicProducts] = useState<any[]>([]);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { isAuthenticated: isAdminAuthenticated } = useAdminAuth()
+  const { user, profile, signOut, isLoading } = useUserAuth()
+  const { cartItems } = useCart()
+  const { wishlistItems } = useWishlist()
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>([])
+  const [dynamicProducts, setDynamicProducts] = useState<any[]>([])
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+
   const navItems = [
     { name: 'Trending', href: '/category/trending' },
-  ];
+  ]
+
+  // Check if user is authenticated (both user and profile loaded)
+  const isUserAuthenticated = !isLoading && !!user && !!profile
 
   useEffect(() => {
     (async () => {
@@ -160,37 +118,37 @@ export default function Header() {
         const [catRes, prodRes] = await Promise.all([
           fetch('/api/categories', { cache: 'no-store' }),
           fetch('/api/products', { cache: 'no-store' }),
-        ]);
-        if (catRes.ok) setDynamicCategories(await catRes.json());
-        if (prodRes.ok) setDynamicProducts(await prodRes.json());
+        ])
+        if (catRes.ok) setDynamicCategories(await catRes.json())
+        if (prodRes.ok) setDynamicProducts(await prodRes.json())
       } catch {}
-    })();
-  }, []);
+    })()
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === '/' && !isSearchOpen) {
-        e.preventDefault();
-        setIsSearchOpen(true);
+        e.preventDefault()
+        setIsSearchOpen(true)
       }
       if (e.key === 'Escape' && isSearchOpen) {
-        setIsSearchOpen(false);
+        setIsSearchOpen(false)
       }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isSearchOpen]);
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isSearchOpen])
 
   const filteredProducts = dynamicProducts.filter((p: any) =>
     searchQuery.trim().length > 0 && (
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.hint.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  ).slice(0, 6);
+  ).slice(0, 6)
 
   const filteredCategories = dynamicCategories.filter(c =>
     searchQuery.trim().length > 0 && c.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 6);
+  ).slice(0, 6)
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-sm">
@@ -268,6 +226,7 @@ export default function Header() {
               </div>
             </PopoverContent>
           </Popover>
+
           <Link href="/wishlist">
             <Button variant="ghost" size="icon" className="hidden md:inline-flex relative hover:text-primary transition-colors">
               <Heart className="h-5 w-5" />
@@ -279,6 +238,7 @@ export default function Header() {
               <span className="sr-only">Wishlist</span>
             </Button>
           </Link>
+
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative hover:text-primary transition-colors">
               <ShoppingBag className="h-5 w-5" />
@@ -290,7 +250,48 @@ export default function Header() {
               <span className="sr-only">Shopping Bag</span>
             </Button>
           </Link>
-          {!isUserAuthenticated ? (
+
+          {/* User Authentication Section */}
+          {isLoading ? (
+            <Button variant="ghost" size="icon" disabled className="hidden md:inline-flex">
+              <User className="h-5 w-5 animate-pulse" />
+            </Button>
+          ) : isUserAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
+                  <User className="h-5 w-5 mr-2" />
+                  {profile?.profile_data?.full_name || 'User'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {profile?.profile_data?.full_name || 'User'}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {profile?.is_admin && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer">
+                        Admin Panel
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={signOut} className="cursor-pointer">
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
             <Button 
               variant="outline" 
               size="sm" 
@@ -299,25 +300,15 @@ export default function Header() {
             >
               Login / Register
             </Button>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
-                  {user?.fullName || 'User'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={userLogout}>Logout</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           )}
           
-          <Link href={isAuthenticated ? "/admin" : "/admin/login"}>
+          <Link href={isAdminAuthenticated ? '/admin' : '/admin/login'}>
             <Button variant="outline" size="sm" className="hidden md:inline-flex hover:text-primary transition-colors">
-              {isAuthenticated ? 'Admin Panel' : 'Admin Login'}
+              {isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
             </Button>
           </Link>
 
+          {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -361,26 +352,35 @@ export default function Header() {
                   </div>
                   <Link href="/wishlist" className="text-lg font-medium hover:text-primary transition-colors">Wishlist</Link>
                   <Link href="/cart" className="text-lg font-medium hover:text-primary transition-colors">Shopping Cart</Link>
-                  {!isUserAuthenticated ? (
+                  
+                  {/* Mobile User Auth */}
+                  {isUserAuthenticated ? (
+                    <div className="space-y-2 border-t pt-4">
+                      <div className="text-lg font-medium">{profile?.profile_data?.full_name || 'User'}</div>
+                      <div className="text-sm text-muted-foreground">{user.email}</div>
+                      {profile?.is_admin && (
+                        <Link href="/admin" className="block text-base text-muted-foreground hover:text-primary transition-colors">
+                          Admin Panel
+                        </Link>
+                      )}
+                      <button 
+                        onClick={signOut}
+                        className="text-base text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  ) : (
                     <button 
                       onClick={() => setIsAuthModalOpen(true)}
                       className="text-lg font-medium hover:text-primary transition-colors"
                     >
                       Login / Register
                     </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="text-lg font-medium">{user?.fullName || 'User'}</div>
-                      <button 
-                        onClick={userLogout}
-                        className="text-base text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        Logout
-                      </button>
-                    </div>
                   )}
-                  <Link href={isAuthenticated ? "/admin" : "/admin/login"} className="text-lg font-medium hover:text-primary transition-colors">
-                    {isAuthenticated ? 'Admin Panel' : 'Admin Login'}
+                  
+                  <Link href={isAdminAuthenticated ? '/admin' : '/admin/login'} className="text-lg font-medium hover:text-primary transition-colors">
+                    {isAdminAuthenticated ? 'Admin Panel' : 'Admin Login'}
                   </Link>
                 </nav>
               </SheetContent>
@@ -391,5 +391,5 @@ export default function Header() {
       
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </header>
-  );
+  )
 }

@@ -53,7 +53,8 @@ export default function AdminProductManager() {
           const mapped: Product[] = (rows || []).map((r: any) => ({
             id: r.id,
             name: r.name,
-            price: Number(r.price),
+            price: r.price ? Number(r.price) : undefined,
+            priceInr: Number(r.price_inr),
             image: r.image || '',
             media: Array.isArray(r.media) ? r.media : (r.image ? [{ type: 'image', url: r.image }] : []),
             hint: r.hint || '',
@@ -94,20 +95,22 @@ export default function AdminProductManager() {
     if (!formData.name || !formData.priceInr || !hasAnyMedia || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields (name, price, description, category, at least one image/video).',
+        description: 'Please fill in all required fields (name, INR price, description, category, at least one image/video).',
         variant: 'destructive'
       });
       return;
     }
 
-    // Use INR price and convert to USD for storage
-    const priceInUSD = parseFloat(formData.priceInr) / USD_TO_INR_RATE;
+    // Calculate prices - INR is required, USD is optional
+    const priceInINR = parseFloat(formData.priceInr);
+    const priceInUSD = formData.price ? parseFloat(formData.price) : (priceInINR / USD_TO_INR_RATE);
 
     const nextId = productList.length > 0 ? Math.max(...productList.map(p => p.id)) + 1 : 1;
     const newProduct: Product = {
       id: nextId,
       name: formData.name,
-      price: priceInUSD,
+      price: formData.price ? priceInUSD : undefined,
+      priceInr: priceInINR,
       image: formData.image,
       media: formData.media,
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
@@ -127,7 +130,8 @@ export default function AdminProductManager() {
         const createdMapped: Product = {
           id: created.id,
           name: created.name,
-          price: Number(created.price),
+          price: created.price ? Number(created.price) : undefined,
+          priceInr: Number(created.price_inr),
           image: created.image || '',
           media: Array.isArray(created.media) ? created.media : [],
           hint: created.hint || '',
@@ -161,19 +165,21 @@ export default function AdminProductManager() {
     if (!editingProduct || !formData.name || !formData.priceInr || !hasAnyMedia || !formData.description || !formData.categoryId) {
       toast({
         title: 'Validation Error',
-        description: 'Please fill in all required fields (name, price, description, category, at least one image/video).',
+        description: 'Please fill in all required fields (name, INR price, description, category, at least one image/video).',
         variant: 'destructive'
       });
       return;
     }
 
-    // Use INR price and convert to USD for storage
-    const priceInUSD = parseFloat(formData.priceInr) / USD_TO_INR_RATE;
+    // Calculate prices - INR is required, USD is optional
+    const priceInINR = parseFloat(formData.priceInr);
+    const priceInUSD = formData.price ? parseFloat(formData.price) : (priceInINR / USD_TO_INR_RATE);
 
     const updatedProduct: Product = {
       ...editingProduct,
       name: formData.name,
-      price: priceInUSD,
+      price: formData.price ? priceInUSD : undefined,
+      priceInr: priceInINR,
       image: formData.image,
       media: formData.media,
       hint: formData.hint || formData.name.toLowerCase().replace(/\s+/g, ' '),
@@ -236,8 +242,8 @@ export default function AdminProductManager() {
     setEditingProduct(product);
     setFormData({
       name: product.name,
-      price: '', // Let admin enter separate USD value
-      priceInr: (product.price * USD_TO_INR_RATE).toFixed(2),
+      price: product.price ? product.price.toString() : '', // USD price (optional)
+      priceInr: product.priceInr.toFixed(2), // INR price (required)
       image: product.image,
       media: product.media || (product.image ? [{ type: 'image', url: product.image }] : []),
       hint: product.hint,
@@ -327,11 +333,20 @@ export default function AdminProductManager() {
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="w-12 h-12 rounded object-cover"
-                      />
+                      {product.image ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-12 h-12 rounded object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded object-cover bg-gray-200 flex items-center justify-center text-xs text-gray-400">
+                          No Image
+                        </div>
+                      )}
                       <div>
                         <div className="font-medium">{product.name}</div>
                         <div className="text-sm text-gray-500">{product.hint}</div>
@@ -341,8 +356,8 @@ export default function AdminProductManager() {
                   <TableCell>
                     <Badge variant="outline">{categoryList.find(c => c.id === product.categoryId)?.name || 'Unknown'}</Badge>
                   </TableCell>
-                  <TableCell>${product.price.toLocaleString()}</TableCell>
-                  <TableCell>₹{(product.price * USD_TO_INR_RATE).toLocaleString('en-IN')}</TableCell>
+                  <TableCell>{product.price ? `$${product.price.toLocaleString()}` : '—'}</TableCell>
+                  <TableCell>₹{product.priceInr.toLocaleString('en-IN')}</TableCell>
                   <TableCell>
                     —
                   </TableCell>
@@ -418,6 +433,67 @@ function ProductForm({
   setFormData: (data: any) => void; 
   categories: Category[];
 }) {
+  const [uploading, setUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleFileUpload = async (file: File, type: 'image' | 'video') => {
+    if (!file) return;
+
+    // Validate file type
+    if (type === 'image' && !file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (type === 'video' && !file.type.startsWith('video/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select a video file.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'products');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setFormData((prev: any) => ({
+        ...prev,
+        media: [...(prev.media || []), { type: data.type, url: data.url }]
+      }));
+      
+      toast({
+        title: 'Success',
+        description: 'File uploaded successfully!',
+      });
+    } catch (error) {
+      toast({
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Failed to upload file',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="grid gap-4 py-4 max-h-[80vh] overflow-y-auto pr-1">
       <div className="grid grid-cols-2 gap-4">
@@ -457,49 +533,169 @@ function ProductForm({
 
       <div className="space-y-2">
         <Label htmlFor="image">Image URL (optional if media added)</Label>
-        <Input
-          id="image"
-          value={formData.image}
-          onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-          placeholder="https://example.com/image.jpg"
-        />
+        <div className="flex gap-2">
+          <Input
+            id="image"
+            value={formData.image}
+            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+            placeholder="https://example.com/image.jpg"
+          />
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setUploading(true);
+                  try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('folder', 'products');
+
+                    const res = await fetch('/api/upload', {
+                      method: 'POST',
+                      body: formData,
+                    });
+
+                    if (!res.ok) {
+                      const error = await res.json();
+                      throw new Error(error.error || 'Upload failed');
+                    }
+
+                    const data = await res.json();
+                    // Set as main image if no image is set
+                    setFormData((prev: any) => {
+                      const updated = { ...prev };
+                      if (!prev.image) {
+                        updated.image = data.url;
+                      }
+                      // Also add to media array
+                      updated.media = [...(prev.media || []), { type: 'image', url: data.url }];
+                      return updated;
+                    });
+                    
+                    toast({
+                      title: 'Success',
+                      description: 'Image uploaded successfully!',
+                    });
+                  } catch (error) {
+                    toast({
+                      title: 'Upload Failed',
+                      description: error instanceof Error ? error.message : 'Failed to upload file',
+                      variant: 'destructive'
+                    });
+                  } finally {
+                    setUploading(false);
+                  }
+                }
+              }}
+              disabled={uploading}
+            />
+            <Button type="button" variant="outline" disabled={uploading} asChild>
+              <span>{uploading ? 'Uploading...' : 'Choose Image'}</span>
+            </Button>
+          </label>
+        </div>
+        {formData.image && (
+          <div className="mt-2">
+            <img 
+              src={formData.image} 
+              alt="Preview" 
+              className="w-20 h-20 object-cover rounded border"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
         <Label>Media (Images/Videos)</Label>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {formData.media?.map((m: any, idx: number) => (
-            <div key={idx} className="relative shrink-0">
-              {m.type === 'image' ? (
-                <img src={m.url} className="w-24 h-24 object-cover rounded" />
-              ) : (
-                <video className="w-24 h-24 object-cover rounded" src={m.url} />
-              )}
-              <button className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2" onClick={() => {
-                const next = [...formData.media];
-                next.splice(idx, 1);
-                setFormData({ ...formData, media: next });
-              }}>x</button>
-            </div>
+            m.url ? (
+              <div key={idx} className="relative shrink-0">
+                {m.type === 'image' ? (
+                  <img 
+                    src={m.url} 
+                    className="w-24 h-24 object-cover rounded" 
+                    alt={`Media ${idx + 1}`}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <video 
+                    className="w-24 h-24 object-cover rounded" 
+                    src={m.url}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
+                <button className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2" onClick={() => {
+                  const next = [...formData.media];
+                  next.splice(idx, 1);
+                  setFormData({ ...formData, media: next });
+                }}>x</button>
+              </div>
+            ) : null
           ))}
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Input placeholder="Image URL" onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              const val = (e.target as HTMLInputElement).value.trim();
-              if (val) setFormData({ ...formData, media: [...formData.media, { type: 'image', url: val }] });
-              (e.target as HTMLInputElement).value = '';
-            }
-          }} />
-          <Input placeholder="Video URL (mp4)" onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              const val = (e.target as HTMLInputElement).value.trim();
-              if (val) setFormData({ ...formData, media: [...formData.media, { type: 'video', url: val }] });
-              (e.target as HTMLInputElement).value = '';
-            }
-          }} />
+          <div className="space-y-2">
+            <Input placeholder="Image URL" onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const val = (e.target as HTMLInputElement).value.trim();
+                if (val) setFormData({ ...formData, media: [...formData.media, { type: 'image', url: val }] });
+                (e.target as HTMLInputElement).value = '';
+              }
+            }} />
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, 'image');
+                }}
+                disabled={uploading}
+              />
+              <Button type="button" variant="outline" size="sm" disabled={uploading} className="w-full" asChild>
+                <span>{uploading ? 'Uploading...' : 'Choose Image'}</span>
+              </Button>
+            </label>
+          </div>
+          <div className="space-y-2">
+            <Input placeholder="Video URL (mp4)" onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const val = (e.target as HTMLInputElement).value.trim();
+                if (val) setFormData({ ...formData, media: [...formData.media, { type: 'video', url: val }] });
+                (e.target as HTMLInputElement).value = '';
+              }
+            }} />
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileUpload(file, 'video');
+                }}
+                disabled={uploading}
+              />
+              <Button type="button" variant="outline" size="sm" disabled={uploading} className="w-full" asChild>
+                <span>{uploading ? 'Uploading...' : 'Choose Video'}</span>
+              </Button>
+            </label>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">Press Enter to add. Supports multiple entries.</p>
+        <p className="text-xs text-muted-foreground">Enter URL and press Enter, or choose a file to upload. Supports multiple entries.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

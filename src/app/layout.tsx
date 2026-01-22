@@ -27,7 +27,18 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased">
+            <body>
+        <UserAuthProvider>
+          <AdminAuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                {children}
+              </WishlistProvider>
+            </CartProvider>
+          </AdminAuthProvider>
+        </UserAuthProvider>
+      </body>
+      {/* <body className="font-body antialiased">
         <UserAuthProvider>
           <CartProvider>
             <WishlistProvider>
@@ -38,7 +49,7 @@ export default function RootLayout({
             </WishlistProvider>
           </CartProvider>
         </UserAuthProvider>
-      </body>
+      </body> */}
     </html>
   );
 }

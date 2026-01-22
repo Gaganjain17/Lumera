@@ -1,23 +1,24 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { useUserAuth } from '@/context/user-auth-context';
-import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useToast } from '@/hooks/use-toast'
+import { useUserAuth } from '@/context/user-auth-context'
+import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 
 interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-  const { login, register } = useUserAuth();
-  const { toast } = useToast();
+  const { signUp, signIn } = useUserAuth()
+  const { toast } = useToast()
   
   // Registration form
   const [regForm, setRegForm] = useState({
@@ -26,170 +27,124 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     mobile: '',
     password: '',
     confirmPassword: ''
-  });
+  })
 
   // Login form
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: ''
-  });
+  })
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [showRegPassword, setShowRegPassword] = useState(false);
-  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const [regError, setRegError] = useState('')
+  const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [showRegPassword, setShowRegPassword] = useState(false)
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false)
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validation
-    if (!regForm.fullName || !regForm.email || !regForm.mobile || !regForm.password) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    if (!validateEmail(regForm.email)) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please enter a valid email address.',
-        variant: 'destructive'
-      });
-      return;
+  const handleRegister = async () => {
+    setRegError('') // Clear previous errors
+    
+    if (!regForm.fullName || !regForm.email || !regForm.password) {
+      setRegError('Please fill in all required fields.')
+      return
     }
 
     if (regForm.password !== regForm.confirmPassword) {
-      toast({
-        title: 'Validation Error',
-        description: 'Passwords do not match.',
-        variant: 'destructive'
-      });
-      return;
+      setRegError('Passwords do not match.')
+      return
     }
 
     if (regForm.password.length < 6) {
-      toast({
-        title: 'Validation Error',
-        description: 'Password must be at least 6 characters long.',
-        variant: 'destructive'
-      });
-      return;
+      setRegError('Password must be at least 6 characters long.')
+      return
     }
 
-    if (regForm.mobile.length < 10) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please enter a valid mobile number.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const result = await register(
+      const { error } = await signUp(
         regForm.email,
         regForm.password,
         regForm.fullName,
         regForm.mobile
-      );
+      )
 
-      if (result.success) {
-        toast({
-          title: 'Registration Successful! 🎉',
-          description: 'Your account has been created. You can now login.',
-        });
-
-        // Reset form and switch to login tab
-        setRegForm({ 
-          fullName: '', 
-          email: '', 
-          mobile: '', 
-          password: '', 
-          confirmPassword: '' 
-        });
-
-        // Optional: Auto-close modal or switch to login tab
-        setTimeout(() => {
-          onClose();
-        }, 1500);
-      } else {
-        toast({
-          title: 'Registration Failed',
-          description: result.error || 'Something went wrong. Please try again.',
-          variant: 'destructive'
-        });
+      if (error) {
+        console.error('Signup error:', error)
+        setRegError(error.message)
+        setIsLoading(false)
+        return
       }
-    } catch (error) {
+
+      // Success!
       toast({
-        title: 'Registration Failed',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive'
-      });
+        title: 'Registration Successful',
+        description: 'Your account has been created successfully!',
+      })
+
+      // Reset form and close modal
+      setRegForm({ fullName: '', email: '', mobile: '', password: '', confirmPassword: '' })
+      setRegError('')
+      onClose()
+    } catch (error: any) {
+      console.error('Signup exception:', error)
+      setRegError('Something went wrong. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleEmailLogin = async () => {
+    setLoginError('') // Clear previous errors
+    
     if (!loginForm.email || !loginForm.password) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive'
-      });
-      return;
+      setLoginError('Please fill in all required fields.')
+      return
     }
 
-    if (!validateEmail(loginForm.email)) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please enter a valid email address.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
-      const success = await login(loginForm.email, loginForm.password);
+      const { error } = await signIn(loginForm.email, loginForm.password)
 
-      if (success) {
-        toast({
-          title: 'Login Successful! 👋',
-          description: 'Welcome back!',
-        });
-
-        onClose();
-        setLoginForm({ email: '', password: '' });
-      } else {
-        toast({
-          title: 'Login Failed',
-          description: 'Invalid email or password.',
-          variant: 'destructive'
-        });
+      if (error) {
+        console.error('Login error:', error)
+        setLoginError(error.message || 'Invalid email or password.')
+        setIsLoading(false)
+        return
       }
-    } catch (error) {
+
+      // Success!
       toast({
-        title: 'Login Failed',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive'
-      });
+        title: 'Login Successful',
+        description: 'Welcome back!',
+      })
+
+      // Reset form and close modal
+      setLoginForm({ email: '', password: '' })
+      setLoginError('')
+      onClose()
+    } catch (error: any) {
+      console.error('Login exception:', error)
+      setLoginError('Something went wrong. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
+
+  // Handle Enter key press
+  const handleLoginKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleEmailLogin()
+    }
+  }
+
+  const handleRegisterKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleRegister()
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -207,19 +162,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
           </TabsList>
           
           {/* LOGIN TAB */}
-          <TabsContent value="login" className="space-y-4 mt-4">
-            <form onSubmit={handleLogin} className="space-y-4">
+          <TabsContent value="login" className="space-y-4">
+            {loginError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{loginError}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">Email</Label>
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="your@email.com"
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                  onKeyPress={handleLoginKeyPress}
                   disabled={isLoading}
                 />
               </div>
@@ -236,6 +199,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     spellCheck={false}
                     value={loginForm.password}
                     onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                    onKeyPress={handleLoginKeyPress}
                     disabled={isLoading}
                     className="pr-10"
                   />
@@ -255,20 +219,33 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   </Button>
                 </div>
               </div>
-              
               <Button 
-                type="submit"
+                onClick={handleEmailLogin} 
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
               </Button>
-            </form>
+            </div>
           </TabsContent>
           
           {/* REGISTER TAB */}
-          <TabsContent value="register" className="space-y-4 mt-4">
-            <form onSubmit={handleRegister} className="space-y-4">
+          <TabsContent value="register" className="space-y-4">
+            {regError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{regError}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="reg-name">
                   Full Name <span className="text-destructive">*</span>
@@ -279,6 +256,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   placeholder="Enter your full name"
                   value={regForm.fullName}
                   onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
+                  onKeyPress={handleRegisterKeyPress}
                   disabled={isLoading}
                 />
               </div>
@@ -290,44 +268,43 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <Input
                   id="reg-email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="your@email.com"
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
                   value={regForm.email}
                   onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                  onKeyPress={handleRegisterKeyPress}
                   disabled={isLoading}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="reg-mobile">
-                  Mobile Number <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="reg-mobile">Mobile (Optional)</Label>
                 <Input
                   id="reg-mobile"
                   type="tel"
-                  placeholder="Enter your mobile number"
+                  placeholder="9876543210"
                   value={regForm.mobile}
                   onChange={(e) => setRegForm({ ...regForm, mobile: e.target.value })}
+                  onKeyPress={handleRegisterKeyPress}
                   disabled={isLoading}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="reg-password">
-                  Password <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="reg-password">Password *</Label>
                 <div className="relative">
                   <Input
                     id="reg-password"
                     type={showRegPassword ? 'text' : 'password'}
-                    placeholder="Create a password (min 6 characters)"
+                    placeholder="Create a password (min 6 chars)"
                     autoCapitalize="off"
                     autoCorrect="off"
                     spellCheck={false}
                     value={regForm.password}
                     onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                    onKeyPress={handleRegisterKeyPress}
                     disabled={isLoading}
                     className="pr-10"
                   />
@@ -349,9 +326,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="reg-confirm-password">
-                  Confirm Password <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="reg-confirm-password">Confirm Password *</Label>
                 <div className="relative">
                   <Input
                     id="reg-confirm-password"
@@ -362,6 +337,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     spellCheck={false}
                     value={regForm.confirmPassword}
                     onChange={(e) => setRegForm({ ...regForm, confirmPassword: e.target.value })}
+                    onKeyPress={handleRegisterKeyPress}
                     disabled={isLoading}
                     className="pr-10"
                   />
@@ -387,12 +363,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 className="w-full" 
                 disabled={isLoading}
               >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
               </Button>
             </form>
           </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -16,7 +16,8 @@ export interface Category {
 export interface Product {
   id: number;
   name: string;
-  price: number; // in USD
+  price?: number; // in USD (optional, can be calculated from INR if not provided)
+  priceInr: number; // in INR (required)
   image: string;
   media?: Array<{ type: 'image' | 'video'; url: string }>;
   hint: string;

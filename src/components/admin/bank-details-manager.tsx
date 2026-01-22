@@ -23,6 +23,7 @@ export default function BankDetailsManager() {
     gstDetails: '',
   });
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -44,6 +45,53 @@ export default function BankDetailsManager() {
       }
     })();
   }, []);
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('folder', 'bank');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      setDetails((prev) => ({ ...prev, qrImageUrl: data.url }));
+      
+      toast({
+        title: 'Success',
+        description: 'QR code image uploaded successfully!',
+      });
+    } catch (error) {
+      toast({
+        title: 'Upload Failed',
+        description: error instanceof Error ? error.message : 'Failed to upload file',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = () => {
     (async () => {
@@ -124,9 +172,38 @@ export default function BankDetailsManager() {
           <div className="space-y-2 md:col-span-2">
             <Label>QR Code Image URL</Label>
             <div className="flex gap-2">
-              <Input value={details.qrImageUrl} onChange={(e) => setDetails({ ...details, qrImageUrl: e.target.value })} placeholder="/assets/images/bank_qr.png" />
-              <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>Preview</Button>
+              <Input value={details.qrImageUrl} onChange={(e) => setDetails({ ...details, qrImageUrl: e.target.value })} placeholder="https://example.com/qr-code.png" />
+              <label className="cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file);
+                  }}
+                  disabled={uploading}
+                />
+                <Button type="button" variant="outline" disabled={uploading} asChild>
+                  <span>{uploading ? 'Uploading...' : 'Choose Image'}</span>
+                </Button>
+              </label>
+              {details.qrImageUrl && (
+                <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>Preview</Button>
+              )}
             </div>
+            {details.qrImageUrl && (
+              <div className="mt-2">
+                <img 
+                  src={details.qrImageUrl} 
+                  alt="QR Preview" 
+                  className="w-32 h-32 object-contain rounded border"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
         <div className="pt-2">

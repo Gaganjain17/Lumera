@@ -19,7 +19,7 @@ export default function ProtectedAdminRoute({ children }: { children: React.Reac
     }
   }, [user, profile, isLoading, router])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">

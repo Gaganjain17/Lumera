@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,8 +17,16 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   
-  const { signIn, profile, user, isLoading: authLoading } = useUserAuth()
+  const { signIn, profile, user, isLoading: authLoading, isProfileLoading } = useUserAuth()
   const router = useRouter()
+  const profileRef = useRef(profile)
+  const isProfileLoadingRef = useRef(isProfileLoading)
+
+  // Keep refs in sync with profile and loading state
+  useEffect(() => {
+    profileRef.current = profile
+    isProfileLoadingRef.current = isProfileLoading
+  }, [profile, isProfileLoading])
 
   // Auto-redirect if already logged in as admin
   useEffect(() => {
@@ -45,17 +53,19 @@ export default function AdminLoginPage() {
       // Step 2: Wait for profile to load (with timeout)
       const waitForProfile = new Promise<boolean>((resolve, reject) => {
         let attempts = 0
-        const maxAttempts = 20 // 10 seconds max (500ms * 20)
+        const maxAttempts = 40 // 20 seconds max (500ms * 40)
         
         const checkProfile = setInterval(() => {
           attempts++
           
-          // Get fresh auth state from context
-          const currentProfile = profile
+          // Get fresh values from refs (which are kept in sync)
+          const currentProfile = profileRef.current
+          const currentlyLoading = isProfileLoadingRef.current
           
-          console.log(`Attempt ${attempts}: Profile =`, currentProfile) // Debug log
+          console.log(`Attempt ${attempts}: Profile =`, currentProfile, 'isProfileLoading =', currentlyLoading) // Debug log
           
-          if (currentProfile) {
+          // Check if profile loading is complete and profile exists
+          if (!currentlyLoading && currentProfile) {
             clearInterval(checkProfile)
             
             if (currentProfile.is_admin) {

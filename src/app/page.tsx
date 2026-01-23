@@ -18,12 +18,15 @@ function HeroSection() {
   return (
     <section className="relative h-[60vh] md:h-[80vh] w-full animate-fade-in">
       <Image
-        src="https://placehold.co/1920x1080/1f2937/ffffff?text=Lumera+Fine+Gems+%26+Jewels"
-        alt="Elegant jewelry piece on a dark background"
-        data-ai-hint="elegant jewelry"
+        src="/ASSETS/background_banner.png"
+        alt="Lumera Fine Gems & Jewels - Exquisite gemstones and jewelry collection"
         fill
         className="object-cover"
         priority
+        quality={85}
+        sizes="100vw"
+        placeholder="blur"
+        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
       />
       <div className="absolute inset-0 bg-black/60" />
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-primary-foreground p-4">

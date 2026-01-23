@@ -359,7 +359,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
               
               <Button 
-                type="submit"
+                onClick={handleRegister}
                 className="w-full" 
                 disabled={isLoading}
               >
@@ -372,7 +372,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   'Create Account'
                 )}
               </Button>
-            </form>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>

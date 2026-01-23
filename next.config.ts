@@ -115,13 +115,15 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-    // Image optimization settings
-    formats: ['image/webp', 'image/avif'],
+    // Image optimization settings for fast loading
+    formats: ['image/avif', 'image/webp'], // AVIF first for better compression
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60, // Cache for 1 minute minimum
+    minimumCacheTTL: 31536000, // Cache for 1 year (optimized images are stable)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Enable image optimization
+    unoptimized: false,
   },
 };
 

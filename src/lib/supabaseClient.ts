@@ -44,12 +44,6 @@ export function getSupabaseClient() {
 //   return supabaseClient;
 // }
 
-
-// Alias for backward compatibility
-export function getSupabaseClient() {
-  return supabase;
-}
-
 // Server-side admin client (for API routes)
 export function createServerSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
